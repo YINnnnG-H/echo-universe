@@ -1,0 +1,96 @@
+import type { Entry } from "../types";
+import { emotionLabel, formatDate, typeLabel } from "../utils/format";
+
+interface CosmicDetailPanelProps {
+  entry?: Entry;
+}
+
+export function CosmicDetailPanel({ entry }: CosmicDetailPanelProps) {
+  if (!entry) {
+    return (
+      <section className="rounded-[32px] border border-white/10 bg-white/6 p-5 backdrop-blur-xl">
+        <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/60">Stellar Insight</p>
+        <h2 className="mt-2 text-2xl font-semibold text-white">选中一颗星</h2>
+        <p className="mt-3 text-sm leading-7 text-slate-300/76">
+          点击宇宙里的恒星或卫星，这里会展开它的摘要、原文、标签、情绪和 AI 分析指数。
+        </p>
+      </section>
+    );
+  }
+
+  const indicators = Object.entries(entry.personality_indicators).sort((a, b) => {
+    const left = typeof a[1] === "boolean" ? (a[1] ? 1 : 0) : a[1];
+    const right = typeof b[1] === "boolean" ? (b[1] ? 1 : 0) : b[1];
+    return right - left;
+  });
+
+  return (
+    <section className="rounded-[32px] border border-white/10 bg-white/6 p-5 backdrop-blur-xl">
+      <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/60">Stellar Insight</p>
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+        <span>{typeLabel(entry.entry_type)}</span>
+        <span>·</span>
+        <span>{formatDate(entry.occurred_at)}</span>
+        <span>·</span>
+        <span>{emotionLabel(entry.emotion)}</span>
+      </div>
+
+      <h2 className="mt-3 text-2xl font-semibold text-white">{entry.title || entry.summary}</h2>
+      <p className="mt-3 text-sm leading-7 text-slate-200/86">{entry.summary}</p>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        {entry.tags.map((tag) => (
+          <span key={tag} className="rounded-full bg-white/8 px-3 py-1 text-xs text-slate-300/82">
+            #{tag}
+          </span>
+        ))}
+      </div>
+
+      <div className="mt-5 rounded-[24px] border border-white/8 bg-[#0b1728]/88 p-4">
+        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">原始记录</p>
+        <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-200/84">{entry.raw_text}</p>
+      </div>
+
+      <div className="mt-5 grid gap-4 xl:grid-cols-2">
+        <div className="rounded-[24px] border border-white/8 bg-[#0b1728]/88 p-4">
+          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">上下文</p>
+          <div className="mt-3 space-y-2 text-sm text-slate-200/82">
+            {entry.context.subject ? <p>主题：{entry.context.subject}</p> : null}
+            {entry.context.creator ? <p>作者 / 主播 / 艺术家：{entry.context.creator}</p> : null}
+            {entry.context.location ? <p>地点：{entry.context.location}</p> : null}
+            {entry.context.companions ? <p>同行者 / 对话对象：{entry.context.companions}</p> : null}
+            {entry.context.body_state ? <p>身体感受：{entry.context.body_state}</p> : null}
+            {entry.context.energy !== undefined ? <p>能量值：{entry.context.energy}/5</p> : null}
+            <p>来源：{entry.source}</p>
+          </div>
+        </div>
+
+        <div className="rounded-[24px] border border-white/8 bg-[#0b1728]/88 p-4">
+          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">AI 分析指数</p>
+          <div className="mt-3 grid gap-3">
+            {indicators.map(([key, value]) => (
+              <div key={key} className="rounded-2xl bg-white/6 p-3">
+                <div className="mb-2 flex items-center justify-between gap-2 text-sm">
+                  <span className="text-slate-200">{key}</span>
+                  <span className="text-slate-300/80">
+                    {typeof value === "boolean" ? (value ? "是" : "否") : value.toFixed(2)}
+                  </span>
+                </div>
+                {typeof value === "number" ? (
+                  <div className="h-2 rounded-full bg-white/8">
+                    <div
+                      className="h-2 rounded-full bg-gradient-to-r from-[#8fb0d6] via-[#b98fa1] to-[#f4d7a1]"
+                      style={{ width: `${Math.max(value * 100, 6)}%` }}
+                    />
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-400">布尔型信号</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
