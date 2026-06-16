@@ -116,3 +116,28 @@ To initialize the production table in Supabase, run:
 ```sql
 \i supabase/init.sql
 ```
+
+## Import Existing Local Data Into Supabase
+
+If your old records were created before `DATABASE_URL` was enabled, they are still stored in the local JSON file and need one one-time import.
+
+1. Put your Supabase connection string into local `.env` as `DATABASE_URL`.
+2. Optional dry run:
+
+```bash
+npm run import:local --workspace server -- --dry-run
+```
+
+3. Run the real import:
+
+```bash
+npm run import:local --workspace server
+```
+
+4. Refresh the public site after the script finishes.
+
+You can also point to a custom local file:
+
+```bash
+npm run import:local --workspace server -- --path "C:\path\to\entries.json"
+```

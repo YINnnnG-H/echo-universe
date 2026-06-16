@@ -16,6 +16,16 @@ function defaultOccurredAt() {
   return formatDateInput(new Date().toISOString());
 }
 
+function resolveDeviceType() {
+  if (typeof navigator === "undefined") {
+    return "unknown";
+  }
+
+  return /Mobile|Android|iPhone|iPad/i.test(navigator.userAgent)
+    ? "mobile-browser"
+    : "desktop-browser";
+}
+
 export function EntryForm({ editingEntry, onSaved }: EntryFormProps) {
   const navigate = useNavigate();
   const [title, setTitle] = useState(editingEntry?.title || "");
@@ -49,27 +59,30 @@ export function EntryForm({ editingEntry, onSaved }: EntryFormProps) {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
+
     if (!rawText.trim()) {
+      setToast("先写下一点内容，再点亮这颗星");
       return;
     }
 
     setIsSubmitting(true);
+
     try {
       const payload = {
         title,
         entry_type: entryType,
         raw_text: rawText,
         source,
-        occurred_at: new Date(occurredAt).toISOString(),
+        occurred_at: new Date(occurredAt || defaultOccurredAt()).toISOString(),
         context,
-        device: navigator.userAgent.includes("Mobile") ? "mobile-browser" : "desktop-browser"
+        device: resolveDeviceType()
       };
 
       const savedEntry = editingEntry
         ? await api.updateEntry(editingEntry.id, payload)
         : await api.createEntry(payload);
 
-      setToast(editingEntry ? "这颗星已经更新" : "新的星体已归档");
+      setToast(editingEntry ? "这颗星已经更新" : "新的星体已经归档");
       setTitle("");
       setRawText("");
       setEntryType("reflection");
@@ -77,9 +90,14 @@ export function EntryForm({ editingEntry, onSaved }: EntryFormProps) {
       setContext({});
       await onSaved?.(savedEntry);
       window.setTimeout(() => setToast(""), 1800);
+
       if (!editingEntry) {
         navigate("/");
       }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "保存失败，请稍后再试";
+      setToast(message);
+      window.setTimeout(() => setToast(""), 2500);
     } finally {
       setIsSubmitting(false);
     }
@@ -105,7 +123,7 @@ export function EntryForm({ editingEntry, onSaved }: EntryFormProps) {
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            placeholder="给这条记录起一个标题，例如：预测编码那一集"
+            placeholder="给这条记录起一个标题，比如：预感编码那一夜"
             className={inputClass}
           />
           <input
@@ -195,7 +213,7 @@ export function EntryForm({ editingEntry, onSaved }: EntryFormProps) {
           <input
             value={source}
             onChange={(event) => setSource(event.target.value)}
-            placeholder="来源，例如 mobile-web / voice-note"
+            placeholder="来源，例如：mobile-web / voice-note"
             className={inputClass}
           />
           <button

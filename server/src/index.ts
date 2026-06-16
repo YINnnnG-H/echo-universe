@@ -1,11 +1,13 @@
-import "dotenv/config";
 import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import cors from "cors";
 import express from "express";
+import { loadEnv } from "./loadEnv.js";
 import { entriesRouter } from "./routes/entries.js";
 import { statsRouter } from "./routes/stats.js";
+
+loadEnv();
 
 const app = express();
 const port = Number(process.env.PORT || 8787);
