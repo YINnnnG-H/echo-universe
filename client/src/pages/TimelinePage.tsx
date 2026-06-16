@@ -50,8 +50,8 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
       }
     }
 
-    if (!selectedEntry || !filteredEntries.some((entry) => entry.id === selectedEntry.id)) {
-      setSelectedEntry(filteredEntries[0]);
+    if (selectedEntry && !filteredEntries.some((entry) => entry.id === selectedEntry.id)) {
+      setSelectedEntry(null);
     }
   }, [entries, filteredEntries, recentEntryId, selectedEntry]);
 

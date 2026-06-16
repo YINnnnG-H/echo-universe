@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const phaseNames = ["新月", "娥眉月", "上弦月", "盈凸月", "满月", "亏凸月", "下弦月", "残月"];
 const synodicMonth = 29.53058867;
@@ -13,13 +13,21 @@ function getMoonData(date: Date) {
 
   return {
     illumination,
+    cycle,
     phaseName: phaseNames[phaseIndex],
     waxing: normalized <= 0.5
   };
 }
 
 export function MoonPhase() {
-  const moon = useMemo(() => getMoonData(new Date()), []);
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 60 * 60 * 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const moon = useMemo(() => getMoonData(now), [now]);
   const shadowWidth = Math.max(6, Math.abs(1 - moon.illumination * 2) * 42);
   const shadowX = moon.waxing ? 50 + shadowWidth * 0.38 : 50 - shadowWidth * 0.38;
 
@@ -55,8 +63,8 @@ export function MoonPhase() {
         </div>
 
         <div className="space-y-1.5 text-sm leading-6 text-slate-300/78">
-          <p>光照比例 {(moon.illumination * 100).toFixed(0)}%</p>
-          <p>它像一只缓慢转动的钟，替今天留下一点潮汐感。</p>
+          <p>光照比例 {Math.round(moon.illumination * 100)}%</p>
+          <p>月相按照朔望月周期推算，当前处于第 {moon.cycle.toFixed(1)} / {synodicMonth.toFixed(1)} 天。</p>
         </div>
       </div>
     </section>
