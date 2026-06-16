@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import cors from "cors";
 import express from "express";
 import { entriesRouter } from "./routes/entries.js";
@@ -9,7 +10,14 @@ import { statsRouter } from "./routes/stats.js";
 const app = express();
 const port = Number(process.env.PORT || 8787);
 const host = process.env.HOST || "0.0.0.0";
-const clientDistPath = resolve(process.cwd(), "client", "dist");
+const currentFilePath = fileURLToPath(import.meta.url);
+const currentDir = dirname(currentFilePath);
+const clientDistCandidates = [
+  resolve(process.cwd(), "client", "dist"),
+  resolve(process.cwd(), "..", "client", "dist"),
+  resolve(currentDir, "..", "..", "client", "dist")
+];
+const clientDistPath = clientDistCandidates.find((path) => existsSync(path)) || clientDistCandidates[0];
 const hasBuiltClient = existsSync(clientDistPath);
 
 app.use(
