@@ -12,8 +12,10 @@ export default function App() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [search, setSearch] = useState("");
   const [recentEntryId, setRecentEntryId] = useState<string>();
+  const [loadError, setLoadError] = useState("");
 
   async function loadAll() {
+    setLoadError("");
     const [entryList, dashboardStats] = await Promise.all([api.listEntries(), api.getDashboardStats()]);
     setEntries(entryList);
     setStats(dashboardStats);
@@ -27,7 +29,10 @@ export default function App() {
   }
 
   useEffect(() => {
-    loadAll().catch((error) => console.error(error));
+    loadAll().catch((error) => {
+      console.error(error);
+      setLoadError(error instanceof Error ? error.message : "加载失败，请稍后再试");
+    });
   }, []);
 
   const filteredEntries = useMemo(() => {
@@ -70,6 +75,11 @@ export default function App() {
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(125,121,183,0.18),transparent_30%),radial-gradient(circle_at_20%_70%,rgba(141,170,145,0.14),transparent_24%),radial-gradient(circle_at_85%_25%,rgba(185,143,161,0.16),transparent_26%),linear-gradient(180deg,#040914_0%,#07111f_42%,#0a1627_100%)]" />
       <Header search={search} onSearchChange={setSearch} />
       <main className="relative mx-auto max-w-7xl px-4 pb-28 pt-6 md:px-6 md:pb-12">
+        {loadError ? (
+          <div className="mb-4 rounded-[24px] border border-amber-200/20 bg-amber-100/10 px-4 py-3 text-sm text-amber-50 backdrop-blur">
+            当前云端服务读取失败：{loadError}
+          </div>
+        ) : null}
         <Routes>
           <Route
             path="/"

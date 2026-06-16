@@ -36,6 +36,12 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/entries", entriesRouter);
 app.use("/api/stats", statsRouter);
 
+app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error(error);
+  const message = error instanceof Error ? error.message : "Internal server error";
+  res.status(500).json({ message });
+});
+
 if (hasBuiltClient) {
   app.use(express.static(clientDistPath));
   app.get("*", (req, res, next) => {
