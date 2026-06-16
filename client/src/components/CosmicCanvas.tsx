@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { X } from "lucide-react";
+import { Maximize2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { DashboardStats, Entry } from "../types";
 import { emotionLabel, formatDate, typeLabel } from "../utils/format";
@@ -10,9 +10,12 @@ interface CosmicCanvasProps {
   activeTag: string;
   selectedEntry?: Entry | null;
   recentEntryId?: string;
+  viewMode?: "compact" | "expanded";
+  showExpandButton?: boolean;
   onSelectTag: (tag: string) => void;
   onSelectEntry: (entry: Entry) => void;
   onDismissDetail: () => void;
+  onRequestExpand?: () => void;
 }
 
 type StarNode = {
@@ -70,22 +73,26 @@ export function CosmicCanvas({
   activeTag,
   selectedEntry,
   recentEntryId,
+  viewMode = "compact",
+  showExpandButton = false,
   onSelectTag,
   onSelectEntry,
-  onDismissDetail
+  onDismissDetail,
+  onRequestExpand
 }: CosmicCanvasProps) {
   const [showArrival, setShowArrival] = useState(false);
   const [latestCardDismissed, setLatestCardDismissed] = useState(false);
+  const isExpanded = viewMode === "expanded";
   const latestEntry = entries[0];
 
   const featuredTags = useMemo(() => {
     const ranked = stableSortTags(entries, stats);
-    return ranked.slice(0, 6).map((item) => ({ tag: item.tag, count: item.count }));
-  }, [entries, stats]);
+    return ranked.slice(0, isExpanded ? 8 : 4).map((item) => ({ tag: item.tag, count: item.count }));
+  }, [entries, isExpanded, stats]);
 
   const backgroundStars = useMemo(
     () =>
-      Array.from({ length: 96 }, (_, index) => {
+      Array.from({ length: isExpanded ? 128 : 72 }, (_, index) => {
         const x = ((index * 37) % 100) + ((index % 3) * 0.7);
         const y = ((index * 29) % 100) + ((index % 5) * 0.5);
         const quietZone = x < 36 && y < 30;
@@ -98,7 +105,7 @@ export function CosmicCanvas({
           duration: 2.4 + (index % 7) * 0.6
         };
       }),
-    []
+    [isExpanded]
   );
 
   const tagColorMap = useMemo(() => {
@@ -109,12 +116,19 @@ export function CosmicCanvas({
 
   const constellations = useMemo(() => {
     return featuredTags.map((tag, index) => {
-      const center = polarPosition(index, featuredTags.length, 24, 62, 50, -Math.PI / 5);
+      const center = polarPosition(index, featuredTags.length, isExpanded ? 26 : 21, 61, 50, -Math.PI / 5);
       const satellites = entries
         .filter((entry) => entry.tags.includes(tag.tag))
-        .slice(0, 5)
+        .slice(0, isExpanded ? 6 : 3)
         .map((entry, entryIndex, array) => {
-          const point = polarPosition(entryIndex, array.length, 8 + entryIndex * 3, center.x, center.y, Math.PI / 6);
+          const point = polarPosition(
+            entryIndex,
+            array.length,
+            (isExpanded ? 10 : 7) + entryIndex * (isExpanded ? 3.4 : 2.4),
+            center.x,
+            center.y,
+            Math.PI / 6
+          );
           return { ...point, entry };
         });
 
@@ -125,25 +139,28 @@ export function CosmicCanvas({
         satellites
       };
     });
-  }, [entries, featuredTags, tagColorMap]);
+  }, [entries, featuredTags, isExpanded, tagColorMap]);
 
   const stars = useMemo<StarNode[]>(() => {
     const centerX = 61;
     const centerY = 52;
-    return entries.slice(0, 24).map((entry, index) => {
-      const orbit = 15 + (index % 6) * 6 + Math.floor(index / 6) * 6;
-      const offset = polarPosition(index, Math.min(entries.length, 24), orbit, centerX, centerY, Math.PI / 7);
+    const visibleEntries = entries.slice(0, isExpanded ? 28 : 12);
+
+    return visibleEntries.map((entry, index) => {
+      const orbit = (isExpanded ? 16 : 12) + (index % 6) * (isExpanded ? 6.4 : 8.4) + Math.floor(index / 6) * (isExpanded ? 6 : 7);
+      const offset = polarPosition(index, visibleEntries.length, orbit, centerX, centerY, Math.PI / 7);
       const tone = entry.tags.find((tag) => tagColorMap.has(tag));
+
       return {
         id: entry.id,
         entry,
-        size: 6 + Math.min(entry.tags.length, 5) * 1.8,
+        size: (isExpanded ? 5.8 : 4.1) + Math.min(entry.tags.length, 5) * (isExpanded ? 1.7 : 1.05),
         color: tone ? tagColorMap.get(tone) || "#93b4d6" : nebulaPalette[index % nebulaPalette.length],
         x: offset.x,
         y: offset.y
       };
     });
-  }, [entries, tagColorMap]);
+  }, [entries, isExpanded, tagColorMap]);
 
   const recentTarget = useMemo(() => {
     if (!recentEntryId) {
@@ -181,7 +198,11 @@ export function CosmicCanvas({
   }, [latestEntry?.id]);
 
   return (
-    <section className="relative min-h-[620px] overflow-hidden rounded-[30px] border border-white/10 bg-[#07111f]/76 shadow-[0_32px_90px_rgba(2,6,16,0.55)] md:min-h-[860px] md:rounded-[40px]">
+    <section
+      className={`relative overflow-hidden border border-white/10 bg-[#07111f]/76 shadow-[0_32px_90px_rgba(2,6,16,0.55)] ${
+        isExpanded ? "min-h-[82vh] rounded-[34px] md:min-h-[88vh]" : "min-h-[620px] rounded-[30px] md:min-h-[860px] md:rounded-[40px]"
+      }`}
+    >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(125,121,183,0.18),transparent_26%),radial-gradient(circle_at_20%_70%,rgba(143,170,145,0.16),transparent_24%),radial-gradient(circle_at_75%_35%,rgba(185,143,161,0.16),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(127,167,201,0.14),transparent_24%)]" />
       <div className="absolute inset-0 opacity-65 [background-image:radial-gradient(circle_at_center,rgba(255,255,255,0.9)_0.8px,transparent_0.8px)] [background-size:120px_120px]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_10%,rgba(8,18,32,0.72),transparent_38%),radial-gradient(circle_at_center,transparent_0%,rgba(7,17,31,0.16)_54%,rgba(2,6,12,0.74)_100%)]" />
@@ -214,40 +235,55 @@ export function CosmicCanvas({
           style={{
             left: `${constellation.x - 10}%`,
             top: `${constellation.y - 8}%`,
-            width: "190px",
-            height: "190px",
+            width: isExpanded ? "220px" : "170px",
+            height: isExpanded ? "220px" : "170px",
             background: `${constellation.color}2d`,
             animation: `floatNebula ${18 + index * 4}s ease-in-out infinite`
           }}
         />
       ))}
 
-      <div className="relative z-10 min-h-[620px] p-4 md:min-h-[860px] md:p-8">
-        <div className="pointer-events-none mb-6 max-w-[540px] pt-20 md:mb-8 md:pt-28">
+      <div className={`relative z-10 p-4 md:p-8 ${isExpanded ? "min-h-[82vh] md:min-h-[88vh]" : "min-h-[620px] md:min-h-[860px]"}`}>
+        <div className={`pointer-events-none max-w-[540px] ${isExpanded ? "mb-4 pt-6 md:pt-8" : "mb-6 pt-20 md:mb-8 md:pt-28"}`}>
           <p className="text-[11px] uppercase tracking-[0.34em] text-slate-300/60">Private Cosmos</p>
-          <h2 className="mt-3 max-w-[88%] text-2xl font-semibold tracking-tight text-white drop-shadow-[0_6px_28px_rgba(3,8,18,0.55)] md:max-w-none md:text-5xl">
-            你的每一段记录，都会在这里慢慢长成自己的星群。
+          <h2 className={`mt-3 max-w-[88%] font-semibold tracking-tight text-white drop-shadow-[0_6px_28px_rgba(3,8,18,0.55)] md:max-w-none ${isExpanded ? "text-xl md:text-4xl" : "text-2xl md:text-5xl"}`}>
+            每一段记录，都会在这里慢慢长成自己的星群。
           </h2>
           <p className="mt-4 max-w-lg text-sm leading-6 text-slate-300/80 md:text-base md:leading-7">
-            高频关键词成为恒星，相关记录成为它们的卫星，主题在时间里聚成颜色不同的星云。点开一颗星，详情会像从宇宙深处缓慢展开。
+            高频关键词成为恒星，相关记录成为它们的卫星，主题在时间里聚成不同颜色的星云。主页先保留呼吸感，放大后再进入细看。
           </p>
         </div>
 
-        <div className="pointer-events-none absolute right-4 top-20 z-20 hidden w-[260px] md:right-8 md:top-32 md:block">
-          <div className="pointer-events-auto rounded-[24px] border border-white/10 bg-[rgba(8,20,35,0.34)] p-3 backdrop-blur-xl">
-            <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/65">Layer Switch</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {["星云", "恒星", "卫星", "情绪潮汐"].map((label) => (
-                <span
-                  key={label}
-                  className="rounded-full border border-white/10 bg-white/8 px-3 py-1.5 text-xs text-slate-200/78"
-                >
-                  {label}
-                </span>
-              ))}
+        {showExpandButton ? (
+          <div className="absolute right-4 top-4 z-30 md:right-8 md:top-8">
+            <button
+              type="button"
+              onClick={onRequestExpand}
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[rgba(8,20,35,0.62)] px-4 py-2 text-sm text-slate-100 backdrop-blur-xl transition hover:bg-white/10"
+            >
+              <Maximize2 size={16} />
+              放大宇宙
+            </button>
+          </div>
+        ) : null}
+
+        {!isExpanded ? (
+          <div className="pointer-events-none absolute right-4 top-20 z-20 hidden w-[240px] md:right-8 md:top-32 md:block">
+            <div className="pointer-events-auto rounded-[24px] border border-white/10 bg-[rgba(8,20,35,0.34)] p-3 backdrop-blur-xl">
+              <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/65">Layer Switch</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {["星云", "恒星", "卫星", "情绪潮汐"].map((label) => (
+                  <span
+                    key={label}
+                    className="rounded-full border border-white/10 bg-white/8 px-3 py-1.5 text-xs text-slate-200/78"
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        ) : null}
 
         {constellations.map((constellation, index) => (
           <div key={constellation.tag.tag}>
@@ -271,13 +307,13 @@ export function CosmicCanvas({
                 }}
                 className="rounded-full border border-white/15 shadow-[0_0_32px_rgba(255,255,255,0.1)]"
                 style={{
-                  width: `${24 + constellation.tag.count * 6}px`,
-                  height: `${24 + constellation.tag.count * 6}px`,
+                  width: `${(isExpanded ? 22 : 16) + constellation.tag.count * (isExpanded ? 6 : 4)}px`,
+                  height: `${(isExpanded ? 22 : 16) + constellation.tag.count * (isExpanded ? 6 : 4)}px`,
                   background: `radial-gradient(circle, #fff6d9 0%, ${constellation.color} 48%, transparent 86%)`
                 }}
               />
               <div
-                className="mt-2 -ml-6 rounded-full border border-white/10 px-2.5 py-1 text-[10px] backdrop-blur md:mt-3 md:-ml-8 md:px-3 md:py-1.5 md:text-xs"
+                className={`rounded-full border border-white/10 backdrop-blur ${isExpanded ? "mt-3 -ml-8 px-3 py-1.5 text-xs" : "mt-2 -ml-5 px-2 py-1 text-[10px]"}`}
                 style={{
                   background: `${constellation.color}22`,
                   color: "#eef2ff"
@@ -303,10 +339,7 @@ export function CosmicCanvas({
                     width: `${Math.hypot(satellite.x - constellation.x, satellite.y - constellation.y)}%`,
                     height: "1px",
                     background: `linear-gradient(90deg, ${constellation.color}, transparent)`,
-                    transform: `rotate(${Math.atan2(
-                      satellite.y - constellation.y,
-                      satellite.x - constellation.x
-                    )}rad)`,
+                    transform: `rotate(${Math.atan2(satellite.y - constellation.y, satellite.x - constellation.x)}rad)`,
                     transformOrigin: "0 0"
                   }}
                 />
@@ -324,13 +357,13 @@ export function CosmicCanvas({
                   className={`absolute z-20 -translate-x-1/2 -translate-y-1/2 rounded-full ${
                     selectedEntry?.id === satellite.entry.id ? "scale-125" : ""
                   }`}
-                  style={{ left: `${satellite.x}%`, top: `${satellite.y}%`, width: "28px", height: "28px" }}
+                  style={{ left: `${satellite.x}%`, top: `${satellite.y}%`, width: isExpanded ? "28px" : "22px", height: isExpanded ? "28px" : "22px" }}
                 >
                   <div
                     className="mx-auto rounded-full border border-white/15 shadow-[0_0_22px_rgba(255,255,255,0.1)]"
                     style={{
-                      width: "14px",
-                      height: "14px",
+                      width: isExpanded ? "14px" : "10px",
+                      height: isExpanded ? "14px" : "10px",
                       background: `radial-gradient(circle, #ffffff 0%, ${constellation.color} 58%, transparent 100%)`
                     }}
                   />
@@ -359,7 +392,7 @@ export function CosmicCanvas({
               repeat: Number.POSITIVE_INFINITY,
               ease: "easeInOut"
             }}
-            style={{ left: `${star.x}%`, top: `${star.y}%`, width: "26px", height: "26px" }}
+            style={{ left: `${star.x}%`, top: `${star.y}%`, width: isExpanded ? "26px" : "20px", height: isExpanded ? "26px" : "20px" }}
           >
             <div
               className="mx-auto rounded-full blur-[0.35px]"
@@ -399,12 +432,8 @@ export function CosmicCanvas({
           ) : null}
         </AnimatePresence>
 
-        {latestEntry && !selectedEntry ? (
-          <motion.article
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute bottom-4 right-4 z-20 hidden xl:block"
-          >
+        {!isExpanded && latestEntry && !selectedEntry ? (
+          <motion.article initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="absolute bottom-4 right-4 z-20 hidden xl:block">
             {latestCardDismissed ? (
               <button
                 type="button"
@@ -445,72 +474,83 @@ export function CosmicCanvas({
 
         <AnimatePresence>
           {selectedEntry ? (
-            <motion.aside
-              initial={{ opacity: 0, y: 36 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 18 }}
-              transition={{ duration: 0.3, ease: [0.2, 1, 0.32, 1] }}
-              className="absolute inset-x-3 bottom-3 z-30 rounded-[24px] border border-white/10 bg-[rgba(8,20,35,0.88)] p-4 shadow-[0_28px_80px_rgba(2,6,16,0.36)] backdrop-blur-xl md:inset-x-auto md:right-6 md:top-[26%] md:w-[360px] md:bottom-auto"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/60">Stellar Overlay</p>
-                  <h3 className="mt-2 text-lg font-semibold text-white md:text-xl">{selectedEntry.title || selectedEntry.summary}</h3>
+            <>
+              <motion.button
+                type="button"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={onDismissDetail}
+                className="absolute inset-0 z-20 cursor-default bg-[rgba(3,8,18,0.12)]"
+                aria-label="关闭星体详情"
+              />
+              <motion.aside
+                initial={{ opacity: 0, y: 36 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 18 }}
+                transition={{ duration: 0.3, ease: [0.2, 1, 0.32, 1] }}
+                className="absolute inset-x-3 bottom-3 z-30 rounded-[24px] border border-white/10 bg-[rgba(8,20,35,0.9)] p-4 shadow-[0_28px_80px_rgba(2,6,16,0.36)] backdrop-blur-xl md:inset-x-auto md:right-6 md:top-[22%] md:w-[380px] md:bottom-auto"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/60">Stellar Overlay</p>
+                    <h3 className="mt-2 text-lg font-semibold text-white md:text-xl">{selectedEntry.title || selectedEntry.summary}</h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onDismissDetail}
+                    className="rounded-full border border-white/10 bg-white/6 p-2 text-slate-200/84 transition hover:bg-white/10"
+                    aria-label="关闭详情"
+                  >
+                    <X size={16} />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={onDismissDetail}
-                  className="rounded-full border border-white/10 bg-white/6 p-2 text-slate-200/84 transition hover:bg-white/10"
-                  aria-label="关闭详情"
-                >
-                  <X size={16} />
-                </button>
-              </div>
 
-              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                <span>{typeLabel(selectedEntry.entry_type)}</span>
-                <span>·</span>
-                <span>{formatDate(selectedEntry.occurred_at)}</span>
-                <span>·</span>
-                <span>{emotionLabel(selectedEntry.emotion)}</span>
-              </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                  <span>{typeLabel(selectedEntry.entry_type)}</span>
+                  <span>·</span>
+                  <span>{formatDate(selectedEntry.occurred_at)}</span>
+                  <span>·</span>
+                  <span>{emotionLabel(selectedEntry.emotion)}</span>
+                </div>
 
-              <p className="mt-3 text-sm leading-6 text-slate-200/84">{selectedEntry.summary}</p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {selectedEntry.tags.slice(0, 5).map((tag) => (
-                  <span key={tag} className="rounded-full border border-white/10 bg-white/8 px-3 py-1 text-xs text-slate-200/84">
-                    #{tag}
-                  </span>
-                ))}
-              </div>
+                <p className="mt-3 text-sm leading-6 text-slate-200/84">{selectedEntry.summary}</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {selectedEntry.tags.slice(0, 5).map((tag) => (
+                    <span key={tag} className="rounded-full border border-white/10 bg-white/8 px-3 py-1 text-xs text-slate-200/84">
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {Object.entries(selectedEntry.personality_indicators)
-                  .sort((a, b) => {
-                    const left = typeof a[1] === "boolean" ? (a[1] ? 1 : 0) : a[1];
-                    const right = typeof b[1] === "boolean" ? (b[1] ? 1 : 0) : b[1];
-                    return right - left;
-                  })
-                  .slice(0, 4)
-                  .map(([key, value]) => {
-                    const numeric = typeof value === "boolean" ? (value ? 1 : 0) : value;
-                    return (
-                      <div key={key} className="rounded-2xl bg-white/6 p-3">
-                        <div className="flex items-center justify-between gap-2 text-sm">
-                          <span className="text-slate-200">{key}</span>
-                          <span className="text-slate-300/80">{numeric.toFixed(2)}</span>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {Object.entries(selectedEntry.personality_indicators)
+                    .sort((a, b) => {
+                      const left = typeof a[1] === "boolean" ? (a[1] ? 1 : 0) : a[1];
+                      const right = typeof b[1] === "boolean" ? (b[1] ? 1 : 0) : b[1];
+                      return right - left;
+                    })
+                    .slice(0, 4)
+                    .map(([key, value]) => {
+                      const numeric = typeof value === "boolean" ? (value ? 1 : 0) : value;
+                      return (
+                        <div key={key} className="rounded-2xl bg-white/6 p-3">
+                          <div className="flex items-center justify-between gap-2 text-sm">
+                            <span className="text-slate-200">{key}</span>
+                            <span className="text-slate-300/80">{numeric.toFixed(2)}</span>
+                          </div>
+                          <div className="mt-2 h-2 rounded-full bg-white/8">
+                            <div
+                              className="h-2 rounded-full bg-gradient-to-r from-[#8fb0d6] via-[#b98fa1] to-[#f4d7a1]"
+                              style={{ width: `${Math.max(numeric * 100, 10)}%` }}
+                            />
+                          </div>
                         </div>
-                        <div className="mt-2 h-2 rounded-full bg-white/8">
-                          <div
-                            className="h-2 rounded-full bg-gradient-to-r from-[#8fb0d6] via-[#b98fa1] to-[#f4d7a1]"
-                            style={{ width: `${Math.max(numeric * 100, 10)}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-              </div>
-            </motion.aside>
+                      );
+                    })}
+                </div>
+              </motion.aside>
+            </>
           ) : null}
         </AnimatePresence>
       </div>

@@ -64,7 +64,7 @@ export function MoonPhase() {
 
         <div className="space-y-1.5 text-sm leading-6 text-slate-300/78">
           <p>光照比例 {Math.round(moon.illumination * 100)}%</p>
-          <p>月相按照朔望月周期推算，当前处于第 {moon.cycle.toFixed(1)} / {synodicMonth.toFixed(1)} 天。</p>
+          <p>它像一只缓慢转动的钟，替今天留下一点潮汐感。</p>
         </div>
       </div>
     </section>

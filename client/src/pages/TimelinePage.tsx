@@ -1,3 +1,5 @@
+import { AnimatePresence, motion } from "framer-motion";
+import { X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { BottomNav } from "../components/BottomNav";
 import { CosmicCanvas } from "../components/CosmicCanvas";
@@ -27,6 +29,7 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
   const [activeTag, setActiveTag] = useState("");
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
   const [homeMode, setHomeMode] = useState<HomeMode>("nebula");
+  const [isUniverseExpanded, setIsUniverseExpanded] = useState(false);
 
   const filteredEntries = useMemo(() => {
     if (!activeTag) {
@@ -42,7 +45,8 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
     }
 
     if (recentEntryId) {
-      const recent = filteredEntries.find((entry) => entry.id === recentEntryId) || entries.find((entry) => entry.id === recentEntryId);
+      const recent =
+        filteredEntries.find((entry) => entry.id === recentEntryId) || entries.find((entry) => entry.id === recentEntryId);
       if (recent) {
         setSelectedEntry(recent);
         setHomeMode("nebula");
@@ -54,6 +58,18 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
       setSelectedEntry(null);
     }
   }, [entries, filteredEntries, recentEntryId, selectedEntry]);
+
+  useEffect(() => {
+    if (!isUniverseExpanded) {
+      return;
+    }
+
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [isUniverseExpanded]);
 
   return (
     <div className="relative pb-28 pt-28 md:pt-24">
@@ -70,6 +86,9 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
           activeTag={activeTag}
           selectedEntry={selectedEntry}
           recentEntryId={recentEntryId}
+          viewMode="compact"
+          showExpandButton
+          onRequestExpand={() => setIsUniverseExpanded(true)}
           onSelectTag={(tag) => {
             setActiveTag((current) => (current === tag ? "" : tag));
             setHomeMode("nebula");
@@ -100,6 +119,48 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {isUniverseExpanded ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[70] bg-[rgba(2,6,16,0.88)] p-3 backdrop-blur-xl md:p-6"
+          >
+            <div className="flex h-full flex-col">
+              <div className="mb-3 flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/60">Expanded Cosmos</p>
+                  <h2 className="mt-1 text-lg font-semibold text-white md:text-2xl">放大宇宙观测窗</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsUniverseExpanded(false)}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/8 px-4 py-2 text-sm text-slate-100 transition hover:bg-white/12"
+                >
+                  <X size={16} />
+                  关闭
+                </button>
+              </div>
+
+              <div className="min-h-0 flex-1">
+                <CosmicCanvas
+                  entries={entries}
+                  stats={stats}
+                  activeTag={activeTag}
+                  selectedEntry={selectedEntry}
+                  recentEntryId={recentEntryId}
+                  viewMode="expanded"
+                  onSelectTag={(tag) => setActiveTag((current) => (current === tag ? "" : tag))}
+                  onSelectEntry={setSelectedEntry}
+                  onDismissDetail={() => setSelectedEntry(null)}
+                />
+              </div>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       <div className="mt-4 text-sm text-slate-300/72 lg:hidden">
         {homeModes.find((mode) => mode.id === homeMode)?.description}
