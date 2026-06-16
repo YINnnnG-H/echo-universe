@@ -1,24 +1,27 @@
-import { Compass, Search, Sparkles, Telescope } from "lucide-react";
+import { Compass, LoaderCircle, LogOut, Search, Sparkles, Telescope } from "lucide-react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 
 interface HeaderProps {
   search: string;
   onSearchChange: (value: string) => void;
+  userEmail?: string;
+  onSignOut: () => Promise<void> | void;
+  isSigningOut?: boolean;
 }
 
 const navItems = [
   { to: "/", label: "回声宇宙", icon: Compass },
-  { to: "/insights", label: "观测站", icon: Telescope }
+  { to: "/insights", label: "观测台", icon: Telescope }
 ];
 
-export function Header({ search, onSearchChange }: HeaderProps) {
+export function Header({ search, onSearchChange, userEmail, onSignOut, isSigningOut = false }: HeaderProps) {
   const location = useLocation();
   const isTimeline = location.pathname === "/";
 
   return (
     <header className="fixed inset-x-0 top-0 z-40">
       <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 pt-4 md:flex-row md:items-start md:justify-between md:px-6">
-        <div className="rounded-[26px] border border-white/10 bg-[rgba(10,19,34,0.42)] px-4 py-3 shadow-[0_18px_50px_rgba(2,6,16,0.18)] backdrop-blur-xl">
+        <div className="rounded-[26px] border border-white/10 bg-[rgba(10,19,34,0.3)] px-4 py-3 shadow-[0_18px_50px_rgba(2,6,16,0.18)] backdrop-blur-xl">
           <p className="text-[11px] uppercase tracking-[0.34em] text-slate-300/72">EchoLand Observatory</p>
           <h1 className="mt-1 text-xl font-semibold text-slate-50 md:text-2xl">回声宇宙</h1>
           <div className="mt-3 hidden items-center gap-2 md:flex">
@@ -51,13 +54,31 @@ export function Header({ search, onSearchChange }: HeaderProps) {
             />
           </label>
 
-          <Link
-            to="/new"
-            className="inline-flex items-center justify-center gap-2 self-end rounded-full border border-white/10 bg-[#f1d6a4]/16 px-4 py-2.5 text-sm font-medium text-[#f6e8ca] backdrop-blur-xl transition hover:scale-[1.02] hover:bg-[#f1d6a4]/22"
-          >
-            <Sparkles size={16} />
-            写下一颗星
-          </Link>
+          <div className="flex w-full flex-wrap items-center justify-end gap-2">
+            {userEmail ? (
+              <div className="rounded-full border border-white/10 bg-[rgba(10,19,34,0.46)] px-4 py-2 text-xs text-slate-200/82 backdrop-blur-xl">
+                {userEmail}
+              </div>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={onSignOut}
+              disabled={isSigningOut}
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/8 px-4 py-2.5 text-sm text-slate-100 transition hover:bg-white/12 disabled:opacity-70"
+            >
+              {isSigningOut ? <LoaderCircle size={16} className="animate-spin" /> : <LogOut size={16} />}
+              退出
+            </button>
+
+            <Link
+              to="/new"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/10 bg-[#f1d6a4]/16 px-4 py-2.5 text-sm font-medium text-[#f6e8ca] backdrop-blur-xl transition hover:scale-[1.02] hover:bg-[#f1d6a4]/22"
+            >
+              <Sparkles size={16} />
+              写下一颗星
+            </Link>
+          </div>
         </div>
       </div>
     </header>

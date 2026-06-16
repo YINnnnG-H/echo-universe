@@ -5,6 +5,7 @@ import { normalizeEntryInsights } from "../utils/insightNormalization.js";
 function normalizeEntry(row: Record<string, unknown>): Entry {
   const rawEntry: Entry = {
     id: String(row.id),
+    user_id: String(row.user_id || ""),
     title: String(row.title || ""),
     entry_type: row.entry_type as Entry["entry_type"],
     raw_text: String(row.raw_text || ""),
@@ -32,28 +33,32 @@ function normalizeEntry(row: Record<string, unknown>): Entry {
   };
 }
 
-export async function listEntries() {
+export async function listEntries(userId: string) {
   const pool = getPool();
-  const result = await pool.query("select * from public.entries order by occurred_at desc, created_at desc");
+  const result = await pool.query(
+    "select * from public.entries where user_id = $1 order by occurred_at desc, created_at desc",
+    [userId]
+  );
   return result.rows.map(normalizeEntry);
 }
 
-export async function getEntryById(id: string) {
+export async function getEntryById(userId: string, id: string) {
   const pool = getPool();
-  const result = await pool.query("select * from public.entries where id = $1 limit 1", [id]);
+  const result = await pool.query("select * from public.entries where user_id = $1 and id = $2 limit 1", [userId, id]);
   return result.rows[0] ? normalizeEntry(result.rows[0]) : null;
 }
 
-export async function createEntry(input: EntryInput, analysis: AnalysisResult) {
+export async function createEntry(userId: string, input: EntryInput, analysis: AnalysisResult) {
   const pool = getPool();
   const occurredAt = input.occurred_at || new Date().toISOString();
   const result = await pool.query(
     `insert into public.entries
-      (title, entry_type, raw_text, summary, tags, emotion, personality_indicators, context, source, device, occurred_at, needs_retry)
+      (user_id, title, entry_type, raw_text, summary, tags, emotion, personality_indicators, context, source, device, occurred_at, needs_retry)
      values
-      ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9, $10, $11, $12)
+      ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9::jsonb, $10, $11, $12, $13)
      returning *`,
     [
+      userId,
       input.title?.trim() || "",
       input.entry_type || "reflection",
       input.raw_text,
@@ -72,8 +77,8 @@ export async function createEntry(input: EntryInput, analysis: AnalysisResult) {
   return normalizeEntry(result.rows[0]);
 }
 
-export async function updateEntry(id: string, updates: EntryUpdate) {
-  const current = await getEntryById(id);
+export async function updateEntry(userId: string, id: string, updates: EntryUpdate) {
+  const current = await getEntryById(userId, id);
   if (!current) {
     return null;
   }
@@ -82,21 +87,22 @@ export async function updateEntry(id: string, updates: EntryUpdate) {
   const result = await pool.query(
     `update public.entries
      set
-      title = $2,
-      entry_type = $3,
-      raw_text = $4,
-      summary = $5,
-      tags = $6,
-      emotion = $7,
-      personality_indicators = $8::jsonb,
-      context = $9::jsonb,
-      source = $10,
-      device = $11,
-      occurred_at = $12,
-      needs_retry = $13
-     where id = $1
+      title = $3,
+      entry_type = $4,
+      raw_text = $5,
+      summary = $6,
+      tags = $7,
+      emotion = $8,
+      personality_indicators = $9::jsonb,
+      context = $10::jsonb,
+      source = $11,
+      device = $12,
+      occurred_at = $13,
+      needs_retry = $14
+     where user_id = $1 and id = $2
      returning *`,
     [
+      userId,
       id,
       updates.title ?? current.title,
       updates.entry_type ?? current.entry_type,
@@ -119,8 +125,23 @@ export async function updateEntry(id: string, updates: EntryUpdate) {
   return result.rows[0] ? normalizeEntry(result.rows[0]) : null;
 }
 
-export async function deleteEntry(id: string) {
+export async function deleteEntry(userId: string, id: string) {
   const pool = getPool();
-  const result = await pool.query("delete from public.entries where id = $1", [id]);
+  const result = await pool.query("delete from public.entries where user_id = $1 and id = $2", [userId, id]);
   return (result.rowCount || 0) > 0;
+}
+
+export async function bootstrapUserEntries(userId: string) {
+  const pool = getPool();
+  const existingResult = await pool.query("select count(*)::int as count from public.entries where user_id = $1", [userId]);
+  if ((existingResult.rows[0]?.count || 0) > 0) {
+    return 0;
+  }
+
+  const claimResult = await pool.query(
+    "update public.entries set user_id = $1 where user_id is null returning id",
+    [userId]
+  );
+
+  return claimResult.rowCount || 0;
 }

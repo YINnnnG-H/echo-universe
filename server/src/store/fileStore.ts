@@ -19,6 +19,7 @@ function normalizeEntry(entry: Partial<Entry>): Entry {
 
   return {
     id: entry.id || randomUUID(),
+    user_id: entry.user_id || "",
     title: entry.title || "",
     entry_type: (entry.entry_type || "reflection") as EntryType,
     raw_text: entry.raw_text || "",
@@ -56,22 +57,25 @@ async function writeEntries(entries: Entry[]) {
   await writeFile(dataPath, JSON.stringify(entries, null, 2), "utf8");
 }
 
-export async function listEntries() {
+export async function listEntries(userId: string) {
   const entries = await readEntries();
-  return entries.sort((a, b) => new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime());
+  return entries
+    .filter((entry) => entry.user_id === userId)
+    .sort((a, b) => new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime());
 }
 
-export async function getEntryById(id: string) {
+export async function getEntryById(userId: string, id: string) {
   const entries = await readEntries();
-  return entries.find((entry) => entry.id === id) || null;
+  return entries.find((entry) => entry.id === id && entry.user_id === userId) || null;
 }
 
-export async function createEntry(input: EntryInput, analysis: AnalysisResult) {
+export async function createEntry(userId: string, input: EntryInput, analysis: AnalysisResult) {
   const entries = await readEntries();
   const now = new Date().toISOString();
   const occurredAt = input.occurred_at || now;
   const entry: Entry = {
     id: randomUUID(),
+    user_id: userId,
     title: input.title?.trim() || "",
     entry_type: input.entry_type || "reflection",
     raw_text: input.raw_text,
@@ -93,9 +97,9 @@ export async function createEntry(input: EntryInput, analysis: AnalysisResult) {
   return entry;
 }
 
-export async function updateEntry(id: string, updates: EntryUpdate) {
+export async function updateEntry(userId: string, id: string, updates: EntryUpdate) {
   const entries = await readEntries();
-  const index = entries.findIndex((entry) => entry.id === id);
+  const index = entries.findIndex((entry) => entry.id === id && entry.user_id === userId);
 
   if (index === -1) {
     return null;
@@ -115,9 +119,9 @@ export async function updateEntry(id: string, updates: EntryUpdate) {
   return entries[index];
 }
 
-export async function deleteEntry(id: string) {
+export async function deleteEntry(userId: string, id: string) {
   const entries = await readEntries();
-  const nextEntries = entries.filter((entry) => entry.id !== id);
+  const nextEntries = entries.filter((entry) => !(entry.id === id && entry.user_id === userId));
 
   if (nextEntries.length === entries.length) {
     return false;
@@ -125,4 +129,31 @@ export async function deleteEntry(id: string) {
 
   await writeEntries(nextEntries);
   return true;
+}
+
+export async function bootstrapUserEntries(userId: string) {
+  const entries = await readEntries();
+  const alreadyOwned = entries.some((entry) => entry.user_id === userId);
+  if (alreadyOwned) {
+    return 0;
+  }
+
+  let claimed = 0;
+  const nextEntries = entries.map((entry) => {
+    if (!entry.user_id) {
+      claimed += 1;
+      return {
+        ...entry,
+        user_id: userId,
+        updated_at: new Date().toISOString()
+      };
+    }
+    return entry;
+  });
+
+  if (claimed > 0) {
+    await writeEntries(nextEntries);
+  }
+
+  return claimed;
 }

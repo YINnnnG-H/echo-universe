@@ -24,6 +24,7 @@ export interface EntryContext {
 
 export interface Entry {
   id: string;
+  user_id?: string;
   title: string;
   entry_type: EntryType;
   raw_text: string;
@@ -108,4 +109,9 @@ export interface DashboardStats {
     links: Array<{ source: string; target: string; value: number }>;
   };
   weeklySummary: string;
+}
+
+export interface AuthContext {
+  userId: string;
+  email?: string;
 }

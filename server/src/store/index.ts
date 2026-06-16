@@ -4,4 +4,4 @@ import * as postgresStore from "./postgresStore.js";
 
 const store = isDatabaseEnabled() ? postgresStore : fileStore;
 
-export const { listEntries, getEntryById, createEntry, updateEntry, deleteEntry } = store;
+export const { listEntries, getEntryById, createEntry, updateEntry, deleteEntry, bootstrapUserEntries } = store;

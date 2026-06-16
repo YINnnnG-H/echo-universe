@@ -24,22 +24,58 @@ function getApiUrl() {
 }
 
 const API_URL = getApiUrl();
+let apiAccessToken = "";
+
+export class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
+export function setApiAccessToken(token?: string) {
+  apiAccessToken = token || "";
+}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), 15000);
 
   try {
+    const headers = new Headers(init?.headers || {});
+    headers.set("Content-Type", "application/json");
+
+    if (apiAccessToken) {
+      headers.set("Authorization", `Bearer ${apiAccessToken}`);
+    }
+
     const response = await fetch(`${API_URL}${path}`, {
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers,
       ...init,
       signal: controller.signal
     });
 
     if (!response.ok) {
-      throw new Error(`Request failed: ${response.status}`);
+      let message = `Request failed: ${response.status}`;
+      const raw = await response.text();
+
+      if (raw) {
+        try {
+          const payload = JSON.parse(raw) as { message?: string };
+          message = payload.message || raw;
+        } catch {
+          message = raw;
+        }
+      }
+
+      if (response.status === 401) {
+        message = "登录已失效，请重新登录";
+      }
+
+      throw new ApiError(message, response.status);
     }
 
     if (response.status === 204) {
@@ -60,6 +96,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   listEntries: () => request<Entry[]>("/api/entries"),
+  bootstrapAccount: () =>
+    request<{ claimed: number }>("/api/account/bootstrap", {
+      method: "POST"
+    }),
   createEntry: (payload: EntryDraft) =>
     request<Entry>("/api/entries", {
       method: "POST",

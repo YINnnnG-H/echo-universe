@@ -2,6 +2,7 @@ create extension if not exists pgcrypto;
 
 create table if not exists public.entries (
   id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade,
   title text not null default '',
   entry_type text not null default 'reflection'
     check (entry_type in ('reflection', 'podcast', 'exhibition', 'music', 'movement', 'reading', 'conversation', 'dream', 'other')),
@@ -19,6 +20,10 @@ create table if not exists public.entries (
   updated_at timestamptz not null default timezone('utc', now())
 );
 
+alter table public.entries
+  add column if not exists user_id uuid references auth.users(id) on delete cascade;
+
+create index if not exists entries_user_id_idx on public.entries (user_id);
 create index if not exists entries_occurred_at_idx on public.entries (occurred_at desc);
 create index if not exists entries_entry_type_idx on public.entries (entry_type);
 create index if not exists entries_tags_gin_idx on public.entries using gin (tags);
@@ -42,8 +47,11 @@ before update on public.entries
 for each row
 execute function public.set_updated_at();
 
-create or replace view public.personality_stats as
+drop view if exists public.personality_stats;
+
+create view public.personality_stats as
 select
+  user_id,
   date(occurred_at) as date,
   indicator.key as indicator,
   avg(
@@ -54,5 +62,5 @@ select
   ) as frequency
 from public.entries,
   jsonb_each_text(personality_indicators) as indicator
-group by 1, 2
-order by 1 desc, 2 asc;
+group by 1, 2, 3
+order by 2 desc, 3 asc;

@@ -1,22 +1,26 @@
 import { Router } from "express";
+import { AuthenticatedRequest, requireAuth } from "../auth.js";
 import { analyzeEntry } from "../services/aiService.js";
 import { createEntry, deleteEntry, getEntryById, listEntries, updateEntry } from "../store/index.js";
 import type { EntryInput, EntryUpdate } from "../types.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 export const entriesRouter = Router();
+entriesRouter.use(requireAuth);
 
 function getRouteId(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value || "";
 }
 
-entriesRouter.get("/", asyncHandler(async (_req, res) => {
-  const entries = await listEntries();
+entriesRouter.get("/", asyncHandler(async (req, res) => {
+  const { userId } = (req as AuthenticatedRequest).auth;
+  const entries = await listEntries(userId);
   res.json(entries);
 }));
 
 entriesRouter.get("/:id", asyncHandler(async (req, res) => {
-  const entry = await getEntryById(getRouteId(req.params.id));
+  const { userId } = (req as AuthenticatedRequest).auth;
+  const entry = await getEntryById(userId, getRouteId(req.params.id));
   if (!entry) {
     res.status(404).json({ message: "Entry not found" });
     return;
@@ -25,6 +29,7 @@ entriesRouter.get("/:id", asyncHandler(async (req, res) => {
 }));
 
 entriesRouter.post("/", asyncHandler(async (req, res) => {
+  const { userId } = (req as AuthenticatedRequest).auth;
   const payload = req.body as EntryInput;
 
   if (!payload.raw_text || !payload.raw_text.trim()) {
@@ -38,13 +43,14 @@ entriesRouter.post("/", asyncHandler(async (req, res) => {
   };
 
   const analysis = await analyzeEntry(normalized);
-  const entry = await createEntry(normalized, analysis);
+  const entry = await createEntry(userId, normalized, analysis);
   res.status(201).json(entry);
 }));
 
 entriesRouter.put("/:id", asyncHandler(async (req, res) => {
+  const { userId } = (req as AuthenticatedRequest).auth;
   const entryId = getRouteId(req.params.id);
-  const current = await getEntryById(entryId);
+  const current = await getEntryById(userId, entryId);
   if (!current) {
     res.status(404).json({ message: "Entry not found" });
     return;
@@ -83,12 +89,13 @@ entriesRouter.put("/:id", asyncHandler(async (req, res) => {
     };
   }
 
-  const entry = await updateEntry(entryId, mergedUpdates);
+  const entry = await updateEntry(userId, entryId, mergedUpdates);
   res.json(entry);
 }));
 
 entriesRouter.delete("/:id", asyncHandler(async (req, res) => {
-  const deleted = await deleteEntry(getRouteId(req.params.id));
+  const { userId } = (req as AuthenticatedRequest).auth;
+  const deleted = await deleteEntry(userId, getRouteId(req.params.id));
   if (!deleted) {
     res.status(404).json({ message: "Entry not found" });
     return;

@@ -1,10 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { startTransition, useEffect, useMemo, useState } from "react";
 import { Route, Routes } from "react-router-dom";
+import { AuthScreen } from "./components/AuthScreen";
 import { Header } from "./components/Header";
 import { InsightsPage } from "./pages/InsightsPage";
 import { NewEntryPage } from "./pages/NewEntryPage";
 import { TimelinePage } from "./pages/TimelinePage";
-import { api } from "./services/api";
+import { ApiError, api, setApiAccessToken } from "./services/api";
+import { supabase } from "./services/supabase";
 import type { DashboardStats, Entry } from "./types";
 
 export default function App() {
@@ -13,12 +16,18 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [recentEntryId, setRecentEntryId] = useState<string>();
   const [loadError, setLoadError] = useState("");
+  const [session, setSession] = useState<Session | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isWorkspaceLoading, setIsWorkspaceLoading] = useState(false);
 
   async function loadAll() {
     setLoadError("");
     const [entryList, dashboardStats] = await Promise.all([api.listEntries(), api.getDashboardStats()]);
-    setEntries(entryList);
-    setStats(dashboardStats);
+    startTransition(() => {
+      setEntries(entryList);
+      setStats(dashboardStats);
+    });
   }
 
   async function refreshAfterSave(entry?: Entry) {
@@ -29,11 +38,97 @@ export default function App() {
   }
 
   useEffect(() => {
-    loadAll().catch((error) => {
-      console.error(error);
-      setLoadError(error instanceof Error ? error.message : "加载失败，请稍后再试");
+    let active = true;
+
+    supabase.auth
+      .getSession()
+      .then(({ data, error }) => {
+        if (!active) {
+          return;
+        }
+
+        if (error) {
+          console.error(error);
+        }
+
+        setSession(data.session);
+        setApiAccessToken(data.session?.access_token);
+        setIsAuthReady(true);
+      })
+      .catch((error) => {
+        console.error(error);
+        if (active) {
+          setIsAuthReady(true);
+        }
+      });
+
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      setApiAccessToken(nextSession?.access_token);
+      setIsAuthReady(true);
     });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, []);
+
+  useEffect(() => {
+    if (!isAuthReady) {
+      return;
+    }
+
+    if (!session) {
+      setApiAccessToken("");
+      setEntries([]);
+      setStats(null);
+      setRecentEntryId(undefined);
+      setLoadError("");
+      setIsWorkspaceLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function initializeWorkspace() {
+      setIsWorkspaceLoading(true);
+      setLoadError("");
+
+      try {
+        await api.bootstrapAccount();
+        if (cancelled) {
+          return;
+        }
+        await loadAll();
+      } catch (error) {
+        console.error(error);
+
+        if (cancelled) {
+          return;
+        }
+
+        if (error instanceof ApiError && error.status === 401) {
+          await supabase.auth.signOut();
+          return;
+        }
+
+        setLoadError(error instanceof Error ? error.message : "加载失败，请稍后再试");
+      } finally {
+        if (!cancelled) {
+          setIsWorkspaceLoading(false);
+        }
+      }
+    }
+
+    initializeWorkspace();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthReady, session?.access_token]);
 
   const filteredEntries = useMemo(() => {
     if (!search.trim()) {
@@ -60,21 +155,45 @@ export default function App() {
     );
   }, [entries, search]);
 
-  async function handleDelete(entry: Entry) {
-    const confirmed = window.confirm(`确定删除这条记录吗？\n\n${entry.title || entry.summary}`);
-    if (!confirmed) {
-      return;
+  async function handleSignOut() {
+    setIsSigningOut(true);
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      setIsSigningOut(false);
     }
+  }
 
-    await api.deleteEntry(entry.id);
-    await loadAll();
+  if (!isAuthReady) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#030812] text-white">
+        <div className="rounded-[28px] border border-white/10 bg-white/6 px-6 py-5 text-sm text-slate-200/82 backdrop-blur-xl">
+          正在校准你的宇宙入口...
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <AuthScreen />;
   }
 
   return (
     <div className="min-h-screen bg-[#030812] text-white">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(125,121,183,0.18),transparent_30%),radial-gradient(circle_at_20%_70%,rgba(141,170,145,0.14),transparent_24%),radial-gradient(circle_at_85%_25%,rgba(185,143,161,0.16),transparent_26%),linear-gradient(180deg,#040914_0%,#07111f_42%,#0a1627_100%)]" />
-      <Header search={search} onSearchChange={setSearch} />
+      <Header
+        search={search}
+        onSearchChange={setSearch}
+        userEmail={session.user.email}
+        onSignOut={handleSignOut}
+        isSigningOut={isSigningOut}
+      />
       <main className="relative mx-auto max-w-7xl px-4 pb-28 pt-6 md:px-6 md:pb-12">
+        {isWorkspaceLoading ? (
+          <div className="mb-4 rounded-[24px] border border-white/10 bg-white/8 px-4 py-3 text-sm text-slate-100/82 backdrop-blur">
+            正在同步你的私人星图与历史档案...
+          </div>
+        ) : null}
         {loadError ? (
           <div className="mb-4 rounded-[24px] border border-amber-200/20 bg-amber-100/10 px-4 py-3 text-sm text-amber-50 backdrop-blur">
             当前云端服务读取失败：{loadError}
