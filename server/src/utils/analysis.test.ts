@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { heuristicAnalyze } from "./analysis.js";
 
-test("heuristic analysis extracts finer-grained tags and indicators from reflective text", () => {
+test("heuristic analysis extracts fine-grained tags and normalized indicators", () => {
   const result = heuristicAnalyze({
     entry_type: "podcast",
     title: "预测编码那一集",
@@ -17,6 +17,7 @@ test("heuristic analysis extracts finer-grained tags and indicators from reflect
   assert.ok(result.tags.includes("认知模型"));
   assert.ok(result.tags.includes("依恋模式"));
   assert.ok(result.tags.includes("过度分析"));
-  assert.ok("Ti" in result.personality_indicators);
+  assert.ok("结构分析" in result.personality_indicators);
   assert.ok("过度分析" in result.personality_indicators);
+  assert.ok("智者原型" in result.personality_indicators);
 });

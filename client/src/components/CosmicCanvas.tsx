@@ -75,6 +75,7 @@ export function CosmicCanvas({
   onDismissDetail
 }: CosmicCanvasProps) {
   const [showArrival, setShowArrival] = useState(false);
+  const [latestCardDismissed, setLatestCardDismissed] = useState(false);
   const latestEntry = entries[0];
 
   const featuredTags = useMemo(() => {
@@ -174,6 +175,10 @@ export function CosmicCanvas({
     const timer = window.setTimeout(() => setShowArrival(false), 2600);
     return () => window.clearTimeout(timer);
   }, [recentTarget]);
+
+  useEffect(() => {
+    setLatestCardDismissed(false);
+  }, [latestEntry?.id]);
 
   return (
     <section className="relative min-h-[620px] overflow-hidden rounded-[30px] border border-white/10 bg-[#07111f]/76 shadow-[0_32px_90px_rgba(2,6,16,0.55)] md:min-h-[860px] md:rounded-[40px]">
@@ -394,23 +399,47 @@ export function CosmicCanvas({
           ) : null}
         </AnimatePresence>
 
-        {latestEntry ? (
+        {latestEntry && !selectedEntry ? (
           <motion.article
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
-            className="absolute bottom-4 right-4 z-20 hidden max-w-sm rounded-[28px] border border-white/10 bg-[#081423b5] p-5 backdrop-blur-xl xl:block"
+            className="absolute bottom-4 right-4 z-20 hidden xl:block"
           >
-            <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/65">Latest Star</p>
-            <h3 className="mt-2 text-lg font-semibold text-white">{latestEntry.title || latestEntry.summary}</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-300/80">{latestEntry.summary}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <span className="rounded-full border border-white/10 bg-white/8 px-3 py-1 text-xs text-slate-200/80">
-                {typeLabel(latestEntry.entry_type)}
-              </span>
-              <span className="rounded-full border border-white/10 bg-white/8 px-3 py-1 text-xs text-slate-200/80">
-                {formatDate(latestEntry.occurred_at)}
-              </span>
-            </div>
+            {latestCardDismissed ? (
+              <button
+                type="button"
+                onClick={() => setLatestCardDismissed(false)}
+                className="rounded-full border border-white/10 bg-[#081423d9] px-4 py-2 text-sm text-slate-200/88 backdrop-blur-xl"
+              >
+                展开最新星迹
+              </button>
+            ) : (
+              <div className="max-w-[280px] rounded-[24px] border border-white/10 bg-[#081423b5] p-4 backdrop-blur-xl">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/65">Latest Star</p>
+                    <h3 className="mt-2 text-base font-semibold text-white">{latestEntry.title || latestEntry.summary}</h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setLatestCardDismissed(true)}
+                    className="rounded-full border border-white/10 bg-white/6 p-2 text-slate-200/82 transition hover:bg-white/10"
+                    aria-label="收起最新星迹"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-slate-300/78">{latestEntry.summary}</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <span className="rounded-full border border-white/10 bg-white/8 px-3 py-1 text-xs text-slate-200/80">
+                    {typeLabel(latestEntry.entry_type)}
+                  </span>
+                  <span className="rounded-full border border-white/10 bg-white/8 px-3 py-1 text-xs text-slate-200/80">
+                    {formatDate(latestEntry.occurred_at)}
+                  </span>
+                </div>
+              </div>
+            )}
           </motion.article>
         ) : null}
 

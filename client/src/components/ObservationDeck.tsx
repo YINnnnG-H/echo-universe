@@ -51,6 +51,9 @@ export function ObservationDeck({ stats, entries }: ObservationDeckProps) {
 
         <div className="rounded-[24px] border border-white/8 bg-[#0b1728]/88 p-4 xl:col-span-2">
           <p className="text-xs uppercase tracking-[0.16em] text-slate-400">最近一颗星的主信号</p>
+          <p className="mt-2 text-sm leading-6 text-slate-300/72">
+            这些指数已经统一成固定中文框架，后续回看时不会再中英混杂。
+          </p>
           <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {topIndicators.map((indicator) => (
               <div key={indicator.key} className="rounded-2xl bg-white/6 p-3">

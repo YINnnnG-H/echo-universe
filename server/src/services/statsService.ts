@@ -1,5 +1,5 @@
 import type { DashboardStats, EmotionPoint, Entry, PersonalityTimeline, TagStat, TypeStat } from "../types.js";
-import { ENTRY_TYPE_LABELS } from "../utils/constants.js";
+import { ARCHETYPE_KEYS, ENTRY_TYPE_LABELS } from "../utils/constants.js";
 
 function toDateKey(timestamp: string) {
   return timestamp.slice(0, 10);
@@ -82,18 +82,17 @@ function buildEmotionTimeline(entries: Entry[]): EmotionPoint[] {
 }
 
 function buildArchetypeSummary(entries: Entry[]) {
-  const keys = ["孤儿", "战士", "疗愈者", "女王", "智者", "寻找者"];
   const result: Record<string, number> = {};
 
-  for (const key of keys) {
+  for (const key of ARCHETYPE_KEYS) {
     result[key] = 0;
   }
 
   for (const entry of entries) {
-    for (const key of keys) {
+    for (const key of ARCHETYPE_KEYS) {
       const value = entry.personality_indicators[key];
       if (typeof value === "number") {
-        result[key] += value;
+        result[key] += Number(value.toFixed(2));
       } else if (value === true) {
         result[key] += 1;
       }
@@ -139,9 +138,7 @@ function buildWeeklySummary(entries: Entry[], tagStats: TagStat[]) {
     .sort((a, b) => b[1] - a[1])[0];
   const latestType = ENTRY_TYPE_LABELS[latest.entry_type];
 
-  return `这周你最常回到 ${topTags || "#自我观察"}，最近一条${latestType}记录里最显著的信号是 ${
-    strongestIndicator?.[0] || "自我观察"
-  }。`;
+  return `这周你最常回到 ${topTags || "#自我观察"}，最近一条${latestType}里最突出的信号是 ${strongestIndicator?.[0] || "自我观察"}。`;
 }
 
 export function buildDashboardStats(entries: Entry[]): DashboardStats {

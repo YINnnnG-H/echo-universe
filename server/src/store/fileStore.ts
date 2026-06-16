@@ -3,20 +3,29 @@ import { dirname, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import type { AnalysisResult, Entry, EntryInput, EntryType, EntryUpdate } from "../types.js";
 import { SAMPLE_ENTRIES } from "../utils/constants.js";
+import { normalizeEntryInsights } from "../utils/insightNormalization.js";
 
 const dataPath = resolve(process.cwd(), "server", "data", "entries.json");
 
 function normalizeEntry(entry: Partial<Entry>): Entry {
   const now = new Date().toISOString();
+  const normalizedInsights = normalizeEntryInsights({
+    entry_type: (entry.entry_type || "reflection") as EntryType,
+    raw_text: entry.raw_text || "",
+    emotion: entry.emotion || "neutral",
+    tags: Array.isArray(entry.tags) ? entry.tags : [],
+    personality_indicators: entry.personality_indicators || {}
+  });
+
   return {
     id: entry.id || randomUUID(),
     title: entry.title || "",
     entry_type: (entry.entry_type || "reflection") as EntryType,
     raw_text: entry.raw_text || "",
     summary: entry.summary || "",
-    tags: Array.isArray(entry.tags) ? entry.tags : [],
+    tags: normalizedInsights.tags,
     emotion: entry.emotion || "neutral",
-    personality_indicators: entry.personality_indicators || {},
+    personality_indicators: normalizedInsights.personality_indicators,
     context: entry.context || {},
     source: entry.source || "mobile-web",
     device: entry.device || "unknown",

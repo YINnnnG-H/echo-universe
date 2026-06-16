@@ -1,8 +1,9 @@
 import type { AnalysisResult, Entry, EntryInput, EntryUpdate } from "../types.js";
 import { getPool } from "./db.js";
+import { normalizeEntryInsights } from "../utils/insightNormalization.js";
 
 function normalizeEntry(row: Record<string, unknown>): Entry {
-  return {
+  const rawEntry: Entry = {
     id: String(row.id),
     title: String(row.title || ""),
     entry_type: row.entry_type as Entry["entry_type"],
@@ -21,6 +22,13 @@ function normalizeEntry(row: Record<string, unknown>): Entry {
     created_at: new Date(String(row.created_at)).toISOString(),
     updated_at: new Date(String(row.updated_at)).toISOString(),
     needs_retry: Boolean(row.needs_retry)
+  };
+  const normalizedInsights = normalizeEntryInsights(rawEntry);
+
+  return {
+    ...rawEntry,
+    tags: normalizedInsights.tags,
+    personality_indicators: normalizedInsights.personality_indicators
   };
 }
 
