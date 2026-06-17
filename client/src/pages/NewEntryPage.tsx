@@ -7,7 +7,7 @@ interface NewEntryPageProps {
 
 export function NewEntryPage({ onRefresh }: NewEntryPageProps) {
   return (
-    <div className="mx-auto max-w-4xl pt-24">
+    <div className="mx-auto max-w-4xl pt-[17rem] md:pt-[15.5rem]">
       <EntryForm onSaved={onRefresh} />
     </div>
   );

@@ -1,4 +1,5 @@
 import ReactECharts from "echarts-for-react";
+import { useEffect, useMemo, useState } from "react";
 import type { DashboardStats } from "../types";
 
 interface ChartsPanelProps {
@@ -8,12 +9,55 @@ interface ChartsPanelProps {
 const chartColors = ["#f4d7a1", "#8daa91", "#b98fa1", "#7fa7c9", "#7d79b7", "#93b4d6"];
 const panelClass = "rounded-[28px] border border-white/10 bg-white/6 p-4 shadow-soft backdrop-blur-xl";
 
+function useMobileChartMode() {
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+    return window.matchMedia("(max-width: 768px)").matches;
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const media = window.matchMedia("(max-width: 768px)");
+    const update = () => setIsMobile(media.matches);
+    update();
+
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  return isMobile;
+}
+
 export function ChartsPanel({ stats }: ChartsPanelProps) {
+  const isMobile = useMobileChartMode();
   const timelineIndicators = Object.entries(stats.personality.data).slice(0, 6);
   const archetypeValues = Object.values(stats.archetypes);
 
+  const chartOpts = useMemo(
+    () => ({
+      renderer: isMobile ? ("svg" as const) : ("canvas" as const)
+    }),
+    [isMobile]
+  );
+
+  const commonProps = useMemo(
+    () => ({
+      opts: chartOpts,
+      notMerge: true,
+      lazyUpdate: true,
+      style: { width: "100%" }
+    }),
+    [chartOpts]
+  );
+
   const lineOption = {
     color: chartColors,
+    animationDuration: isMobile ? 400 : 700,
     tooltip: {
       trigger: "axis",
       backgroundColor: "rgba(8, 20, 35, 0.92)",
@@ -44,7 +88,7 @@ export function ChartsPanel({ stats }: ChartsPanelProps) {
       name,
       type: "line",
       smooth: true,
-      showSymbol: true,
+      showSymbol: !isMobile,
       symbolSize: 7,
       data,
       lineStyle: { width: 2.4 },
@@ -56,6 +100,7 @@ export function ChartsPanel({ stats }: ChartsPanelProps) {
   };
 
   const radarOption = {
+    animationDuration: isMobile ? 400 : 700,
     tooltip: {
       backgroundColor: "rgba(8, 20, 35, 0.92)",
       borderRadius: 16,
@@ -63,7 +108,7 @@ export function ChartsPanel({ stats }: ChartsPanelProps) {
       textStyle: { color: "#f8fafc" }
     },
     radar: {
-      radius: "62%",
+      radius: isMobile ? "56%" : "62%",
       axisName: { color: "rgba(226,232,240,0.74)" },
       splitArea: {
         areaStyle: {
@@ -92,6 +137,7 @@ export function ChartsPanel({ stats }: ChartsPanelProps) {
 
   const emotionOption = {
     color: ["#8daa91", "#93b4d6", "#b98fa1"],
+    animationDuration: isMobile ? 400 : 700,
     tooltip: {
       trigger: "axis",
       backgroundColor: "rgba(8, 20, 35, 0.92)",
@@ -122,6 +168,7 @@ export function ChartsPanel({ stats }: ChartsPanelProps) {
   };
 
   const graphOption = {
+    animationDuration: isMobile ? 300 : 600,
     tooltip: {
       backgroundColor: "rgba(8, 20, 35, 0.92)",
       borderRadius: 16,
@@ -134,13 +181,14 @@ export function ChartsPanel({ stats }: ChartsPanelProps) {
         layout: "force",
         roam: true,
         force: {
-          repulsion: 180,
-          edgeLength: 90
+          repulsion: isMobile ? 140 : 180,
+          edgeLength: isMobile ? 72 : 90
         },
         label: {
           show: true,
           color: "#f8fafc",
-          fontWeight: 600
+          fontWeight: 600,
+          fontSize: isMobile ? 10 : 12
         },
         lineStyle: {
           color: "rgba(255,255,255,0.26)",
@@ -148,7 +196,7 @@ export function ChartsPanel({ stats }: ChartsPanelProps) {
         },
         data: stats.themeNetwork.nodes.map((node, index) => ({
           ...node,
-          symbolSize: 20 + node.value * 8,
+          symbolSize: (isMobile ? 16 : 20) + node.value * (isMobile ? 6 : 8),
           itemStyle: {
             color: chartColors[index % chartColors.length]
           },
@@ -172,6 +220,7 @@ export function ChartsPanel({ stats }: ChartsPanelProps) {
 
   const typeOption = {
     color: chartColors,
+    animationDuration: isMobile ? 400 : 700,
     tooltip: {
       trigger: "item",
       backgroundColor: "rgba(8, 20, 35, 0.92)",
@@ -203,7 +252,7 @@ export function ChartsPanel({ stats }: ChartsPanelProps) {
           <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/60">Signal Drift</p>
           <h2 className="text-lg font-semibold text-white">连续维度变化曲线</h2>
         </div>
-        <ReactECharts option={lineOption} style={{ height: 340 }} />
+        <ReactECharts {...commonProps} option={lineOption} style={{ ...commonProps.style, height: isMobile ? 300 : 340 }} />
       </section>
 
       <section className={panelClass}>
@@ -211,10 +260,10 @@ export function ChartsPanel({ stats }: ChartsPanelProps) {
           <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/60">Narrative Field</p>
           <h2 className="text-lg font-semibold text-white">叙事原型活跃度</h2>
           <p className="mt-2 text-sm leading-6 text-slate-300/72">
-            这里展示的是叙事母题的平均活跃度，不是人格定论。它会参考主题、行动感、关系处理和恢复线索，而不是只看你有没有写出某个原型名字。
+            这里显示的是叙事母题的平均活跃度，不是人格定论。它会参考主题、行动感、关系处理和恢复线索，而不是只看你有没有写出某个原型名字。
           </p>
         </div>
-        <ReactECharts option={radarOption} style={{ height: 320 }} />
+        <ReactECharts {...commonProps} option={radarOption} style={{ ...commonProps.style, height: isMobile ? 300 : 320 }} />
       </section>
 
       <section className={panelClass}>
@@ -222,7 +271,7 @@ export function ChartsPanel({ stats }: ChartsPanelProps) {
           <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/60">Source Constellation</p>
           <h2 className="text-lg font-semibold text-white">体验来源分布</h2>
         </div>
-        <ReactECharts option={typeOption} style={{ height: 320 }} />
+        <ReactECharts {...commonProps} option={typeOption} style={{ ...commonProps.style, height: isMobile ? 300 : 320 }} />
       </section>
 
       <section className={panelClass}>
@@ -230,7 +279,7 @@ export function ChartsPanel({ stats }: ChartsPanelProps) {
           <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/60">Emotion Tide</p>
           <h2 className="text-lg font-semibold text-white">情绪潮汐图</h2>
         </div>
-        <ReactECharts option={emotionOption} style={{ height: 320 }} />
+        <ReactECharts {...commonProps} option={emotionOption} style={{ ...commonProps.style, height: isMobile ? 300 : 320 }} />
       </section>
 
       <section className={`${panelClass} xl:col-span-2`}>
@@ -241,7 +290,7 @@ export function ChartsPanel({ stats }: ChartsPanelProps) {
           </div>
           <p className="max-w-md text-sm leading-6 text-slate-300/72">{stats.weeklySummary}</p>
         </div>
-        <ReactECharts option={graphOption} style={{ height: 360 }} />
+        <ReactECharts {...commonProps} option={graphOption} style={{ ...commonProps.style, height: isMobile ? 340 : 360 }} />
       </section>
     </div>
   );
