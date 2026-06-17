@@ -54,16 +54,18 @@ export function QuoteCard({ latestEntry }: QuoteCardProps) {
   }, [emotion, latestEntry]);
 
   const weatherLine = latestEntry
-    ? `${latestEntry.tags.slice(0, 2).map((tag) => `#${tag}`).join(" · ")} 正在今晚的天空里发亮。`
-    : "今晚的宇宙还很安静，等第一颗新星点亮。";
+    ? `${latestEntry.tags.slice(0, 2).map((tag) => `#${tag}`).join(" · ")} 正在今夜的天穹里发亮。`
+    : "今夜的宇宙还很安静，等第一颗新星点亮。";
 
   return (
     <motion.aside
-      animate={{ width: collapsed ? 102 : 332 }}
+      animate={{ width: collapsed ? 108 : 336 }}
       transition={{ type: "spring", stiffness: 220, damping: 24 }}
-      className="pointer-events-auto relative z-40 w-full max-w-[332px] overflow-hidden rounded-[28px] border border-white/10 bg-[rgba(8,20,35,0.72)] shadow-[0_24px_70px_rgba(2,6,16,0.3)] backdrop-blur-2xl"
+      className="cosmos-camera pointer-events-auto relative z-40 w-full max-w-[336px] overflow-hidden rounded-[28px] border border-white/10 bg-[rgba(8,20,35,0.74)] shadow-[0_24px_70px_rgba(2,6,16,0.3)] backdrop-blur-2xl"
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-r from-[rgba(143,176,214,0.14)] via-transparent to-[rgba(244,215,161,0.12)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(143,176,214,0.12),transparent_24%),radial-gradient(circle_at_82%_18%,rgba(244,215,161,0.1),transparent_24%)]" />
+      <div className="pointer-events-none cosmos-parallax-slow absolute -left-8 top-3 h-16 w-16 rounded-full bg-[radial-gradient(circle,rgba(143,176,214,0.16),rgba(143,176,214,0))] blur-2xl" />
+      <div className="pointer-events-none cosmos-parallax-reverse absolute right-0 top-0 h-20 w-20 rounded-full bg-[radial-gradient(circle,rgba(244,215,161,0.14),rgba(244,215,161,0))] blur-2xl" />
 
       <div className="relative flex items-center justify-between gap-3 px-4 py-3">
         <div className={collapsed ? "hidden" : "block"}>

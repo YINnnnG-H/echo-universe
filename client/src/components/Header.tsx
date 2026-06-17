@@ -40,20 +40,24 @@ export function Header({
 
   return (
     <header className="fixed inset-x-0 top-0 z-50">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-[rgba(2,8,18,0.96)] via-[rgba(2,8,18,0.72)] to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-52 bg-gradient-to-b from-[rgba(2,8,18,0.98)] via-[rgba(2,8,18,0.78)] to-transparent" />
       <div className="mx-auto max-w-7xl px-4 pt-4 md:px-6">
         <div
           className={`origin-top overflow-hidden transition-all duration-500 ${
             isCondensed ? "pointer-events-none max-h-0 -translate-y-5 opacity-0" : "max-h-56 translate-y-0 opacity-100"
           }`}
         >
-          <div className="mb-3 rounded-[30px] border border-white/10 bg-[linear-gradient(135deg,rgba(13,24,42,0.78),rgba(7,16,30,0.52))] px-5 py-5 shadow-[0_24px_80px_rgba(2,6,16,0.28)] backdrop-blur-2xl">
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="cosmos-camera relative mb-3 overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(135deg,rgba(13,24,42,0.82),rgba(7,16,30,0.56))] px-5 py-5 shadow-[0_24px_80px_rgba(2,6,16,0.28)] backdrop-blur-2xl">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_24%,rgba(143,176,214,0.12),transparent_20%),radial-gradient(circle_at_86%_18%,rgba(244,215,161,0.1),transparent_22%)]" />
+            <div className="pointer-events-none cosmos-parallax-slow absolute -left-10 top-6 h-28 w-28 rounded-full bg-[radial-gradient(circle,rgba(143,176,214,0.18),rgba(143,176,214,0))] blur-3xl" />
+            <div className="pointer-events-none cosmos-parallax-reverse absolute right-0 top-0 h-36 w-36 rounded-full bg-[radial-gradient(circle,rgba(244,215,161,0.14),rgba(244,215,161,0))] blur-3xl" />
+
+            <div className="relative flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div className="max-w-2xl">
                 <p className="text-[11px] uppercase tracking-[0.34em] text-slate-300/72">EchoLand Observatory</p>
                 <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white md:text-3xl">回声宇宙</h1>
                 <p className="mt-3 text-sm leading-7 text-slate-300/76 md:text-[15px]">
-                  这不是普通的记录面板，而是一座漂浮在深空里的私人意识档案馆。每一条文字，都会被送进星云、长成恒星、留下轨道。
+                  这里不是普通的记录面板，而是一座漂浮在深空里的私人意识档案馆。每一条文字，都会被送进星云、长成恒星、留下轨道。
                 </p>
               </div>
 
@@ -77,16 +81,24 @@ export function Header({
           </div>
         </div>
 
-        <div className="relative rounded-[28px] border border-white/10 bg-[rgba(7,17,31,0.76)] px-3 py-3 shadow-[0_18px_50px_rgba(2,6,16,0.26)] backdrop-blur-2xl">
-          <div className="absolute inset-0 rounded-[28px] bg-[linear-gradient(90deg,rgba(143,176,214,0.06),transparent_32%,rgba(244,215,161,0.06)_70%,transparent)]" />
+        <div
+          className={`cosmos-camera relative overflow-hidden rounded-[28px] border border-white/10 px-3 py-3 shadow-[0_18px_50px_rgba(2,6,16,0.26)] backdrop-blur-2xl transition-all duration-300 ${
+            isCondensed ? "bg-[rgba(7,17,31,0.92)]" : "bg-[rgba(7,17,31,0.78)]"
+          }`}
+        >
+          <div className="absolute inset-0 rounded-[28px] bg-[linear-gradient(90deg,rgba(143,176,214,0.08),transparent_32%,rgba(244,215,161,0.08)_70%,transparent)]" />
+          <div className="pointer-events-none cosmos-parallax-slow absolute left-[12%] top-[28%] h-16 w-16 rounded-full bg-[radial-gradient(circle,rgba(143,176,214,0.14),rgba(143,176,214,0))] blur-2xl" />
+          <div className="pointer-events-none cosmos-parallax-reverse absolute right-[10%] top-[16%] h-20 w-20 rounded-full bg-[radial-gradient(circle,rgba(244,215,161,0.14),rgba(244,215,161,0))] blur-2xl" />
+          <div className="absolute inset-x-0 bottom-[-22px] h-10 rounded-b-[28px] bg-gradient-to-b from-[rgba(7,17,31,0.34)] via-[rgba(7,17,31,0.18)] to-transparent blur-md" />
+
           <div className="relative flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-1 flex-col gap-2 md:max-w-xl">
-              <label className="relative overflow-hidden rounded-full border border-white/10 bg-[rgba(12,24,42,0.56)]">
+              <label className="relative overflow-hidden rounded-full border border-white/10 bg-[rgba(12,24,42,0.62)]">
                 <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-300/70" size={18} />
                 <input
                   value={search}
                   onChange={(event) => onSearchChange(event.target.value)}
-                  placeholder="扫描一颗星、一个主题、一个作者，或一种波动"
+                  placeholder="扫描一颗星、一个主题、一个作者，或一种情绪波动"
                   className="h-12 w-full bg-transparent pl-11 pr-4 text-sm text-slate-50 outline-none placeholder:text-slate-300/55"
                   disabled={!isTimeline}
                 />
@@ -145,7 +157,7 @@ export function Header({
           </div>
         </div>
 
-        <div className="pointer-events-none h-16 bg-gradient-to-b from-[rgba(7,17,31,0.46)] via-[rgba(7,17,31,0.18)] to-transparent backdrop-blur-xl [mask-image:linear-gradient(to_bottom,black,transparent)]" />
+        <div className="pointer-events-none h-16 bg-gradient-to-b from-[rgba(7,17,31,0.42)] via-[rgba(7,17,31,0.18)] to-transparent backdrop-blur-xl [mask-image:linear-gradient(to_bottom,black,transparent)]" />
       </div>
     </header>
   );

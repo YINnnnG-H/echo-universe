@@ -32,9 +32,10 @@ export function MoonPhase() {
   const illuminationPercent = Math.round(moon.illumination * 100);
 
   return (
-    <section className="pointer-events-auto relative overflow-hidden rounded-[32px] border border-white/10 bg-[linear-gradient(160deg,rgba(9,18,34,0.92),rgba(7,13,25,0.78))] p-5 shadow-[0_28px_90px_rgba(2,6,16,0.32)] backdrop-blur-2xl">
+    <section className="pointer-events-auto moon-card relative overflow-hidden rounded-[32px] border border-white/10 bg-[linear-gradient(160deg,rgba(9,18,34,0.92),rgba(7,13,25,0.78))] p-5 shadow-[0_28px_90px_rgba(2,6,16,0.32)] backdrop-blur-2xl">
       <div className="pointer-events-none absolute -right-10 top-0 h-32 w-32 rounded-full bg-[radial-gradient(circle,rgba(244,215,161,0.18),rgba(244,215,161,0))] blur-3xl" />
       <div className="pointer-events-none absolute left-6 top-6 h-px w-24 bg-gradient-to-r from-white/50 to-transparent" />
+      <div className="pointer-events-none moon-card__grain absolute inset-0 opacity-40" />
 
       <div className="relative flex items-start justify-between gap-4">
         <div>

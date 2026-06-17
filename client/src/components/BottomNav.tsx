@@ -10,13 +10,16 @@ const links = [
 export function BottomNav() {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#07111fcc]/90 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-xl items-center justify-between gap-2 rounded-[24px] border border-white/10 bg-white/8 px-2 py-2 shadow-[0_18px_40px_rgba(2,6,16,0.32)]">
+      <div className="cosmos-camera relative mx-auto flex max-w-xl items-center justify-between gap-2 overflow-hidden rounded-[24px] border border-white/10 bg-white/8 px-2 py-2 shadow-[0_18px_40px_rgba(2,6,16,0.32)]">
+        <div className="pointer-events-none cosmos-parallax-slow absolute left-[8%] top-[24%] h-12 w-12 rounded-full bg-[radial-gradient(circle,rgba(143,176,214,0.16),rgba(143,176,214,0))] blur-2xl" />
+        <div className="pointer-events-none cosmos-parallax-reverse absolute right-[10%] top-[20%] h-14 w-14 rounded-full bg-[radial-gradient(circle,rgba(244,215,161,0.14),rgba(244,215,161,0))] blur-2xl" />
+
         {links.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex min-w-[96px] flex-1 flex-col items-center gap-1 rounded-2xl px-3 py-2 text-xs transition ${
+              `relative flex min-w-[96px] flex-1 flex-col items-center gap-1 rounded-2xl px-3 py-2 text-xs transition ${
                 isActive ? "bg-white/14 text-white shadow-soft" : "text-slate-300/70"
               }`
             }

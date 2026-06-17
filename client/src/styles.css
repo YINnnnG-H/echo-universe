@@ -66,3 +66,125 @@ textarea {
     transform: scale(1.08);
   }
 }
+
+@keyframes cameraDrift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-10px, -6px, 0) scale(1.018);
+  }
+}
+
+@keyframes parallaxFloatSlow {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(12px, -10px, 0);
+  }
+}
+
+@keyframes parallaxFloatReverse {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-14px, 8px, 0);
+  }
+}
+
+@keyframes portalPulse {
+  0%,
+  100% {
+    opacity: 0.34;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 0.78;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes portalRotate {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes moonCardDrift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -4px, 0);
+  }
+}
+
+.cosmos-camera {
+  animation: cameraDrift 28s ease-in-out infinite;
+  will-change: transform;
+}
+
+.cosmos-parallax-slow {
+  animation: parallaxFloatSlow 20s ease-in-out infinite;
+  will-change: transform;
+}
+
+.cosmos-parallax-reverse {
+  animation: parallaxFloatReverse 24s ease-in-out infinite;
+  will-change: transform;
+}
+
+.portal-halo {
+  animation: portalPulse 5.5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.portal-ring {
+  transform: translate(-50%, -50%);
+  will-change: transform;
+}
+
+.portal-ring--outer {
+  animation: portalRotate 20s linear infinite;
+}
+
+.portal-ring--inner {
+  animation: portalRotate 13s linear infinite reverse;
+}
+
+.moon-card {
+  animation: moonCardDrift 18s ease-in-out infinite;
+  will-change: transform;
+}
+
+.moon-card__grain {
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.08) 0.7px, transparent 0.7px),
+    radial-gradient(circle at 70% 40%, rgba(255, 255, 255, 0.06) 0.7px, transparent 0.7px);
+  background-size: 64px 64px, 92px 92px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .cosmos-camera,
+  .cosmos-parallax-slow,
+  .cosmos-parallax-reverse,
+  .portal-halo,
+  .portal-ring--outer,
+  .portal-ring--inner,
+  .moon-card {
+    animation: none !important;
+  }
+}

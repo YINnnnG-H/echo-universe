@@ -82,7 +82,7 @@ export function EntryForm({ editingEntry, onSaved }: EntryFormProps) {
         ? await api.updateEntry(editingEntry.id, payload)
         : await api.createEntry(payload);
 
-      setToast(editingEntry ? "这颗星已经更新" : "新的星体已经归档");
+      setToast(editingEntry ? "这颗星已经更新" : "新星正在入轨...");
       setTitle("");
       setRawText("");
       setEntryType("reflection");
@@ -93,6 +93,9 @@ export function EntryForm({ editingEntry, onSaved }: EntryFormProps) {
 
       if (!editingEntry) {
         navigate("/");
+        window.setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }, 80);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "保存失败，请稍后再试";
@@ -123,7 +126,7 @@ export function EntryForm({ editingEntry, onSaved }: EntryFormProps) {
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            placeholder="给这条记录起一个标题，比如：预感编码那一夜"
+            placeholder="给这条记录起一个标题，比如：预感编码那一天"
             className={inputClass}
           />
           <input

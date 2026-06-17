@@ -28,6 +28,7 @@ const homeModes: Array<{ id: HomeMode; label: string; description: string }> = [
 export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: TimelinePageProps) {
   const [activeTag, setActiveTag] = useState("");
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
+  const [selectedEntrySource, setSelectedEntrySource] = useState<"canvas" | "archive" | null>(null);
   const [homeMode, setHomeMode] = useState<HomeMode>("nebula");
   const [isUniverseExpanded, setIsUniverseExpanded] = useState(false);
 
@@ -43,6 +44,7 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
   useEffect(() => {
     if (filteredEntries.length === 0) {
       setSelectedEntry(null);
+      setSelectedEntrySource(null);
       return;
     }
 
@@ -51,6 +53,7 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
         filteredEntries.find((entry) => entry.id === recentEntryId) || entries.find((entry) => entry.id === recentEntryId);
       if (recent) {
         setSelectedEntry(null);
+        setSelectedEntrySource(null);
         setHomeMode("nebula");
         return;
       }
@@ -58,6 +61,7 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
 
     if (selectedEntry && !filteredEntries.some((entry) => entry.id === selectedEntry.id)) {
       setSelectedEntry(null);
+      setSelectedEntrySource(null);
     }
   }, [entries, filteredEntries, recentEntryId, selectedEntry]);
 
@@ -80,10 +84,12 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55, ease: "easeOut" }}
-          className="relative overflow-hidden rounded-[36px] border border-white/10 bg-[linear-gradient(145deg,rgba(10,18,34,0.92),rgba(5,12,24,0.78))] p-6 shadow-[0_30px_100px_rgba(2,6,16,0.32)] backdrop-blur-2xl md:p-8"
+          className="cosmos-camera relative overflow-hidden rounded-[36px] border border-white/10 bg-[linear-gradient(145deg,rgba(10,18,34,0.92),rgba(5,12,24,0.78))] p-6 shadow-[0_30px_100px_rgba(2,6,16,0.32)] backdrop-blur-2xl md:p-8"
         >
-          <div className="pointer-events-none absolute -left-12 top-6 h-40 w-40 rounded-full bg-[radial-gradient(circle,rgba(143,176,214,0.18),rgba(143,176,214,0))] blur-3xl" />
-          <div className="pointer-events-none absolute right-0 top-0 h-48 w-48 rounded-full bg-[radial-gradient(circle,rgba(244,215,161,0.14),rgba(244,215,161,0))] blur-3xl" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_24%,rgba(143,176,214,0.12),transparent_20%),radial-gradient(circle_at_82%_20%,rgba(244,215,161,0.12),transparent_22%)]" />
+          <div className="pointer-events-none cosmos-parallax-slow absolute -left-12 top-6 h-40 w-40 rounded-full bg-[radial-gradient(circle,rgba(143,176,214,0.18),rgba(143,176,214,0))] blur-3xl" />
+          <div className="pointer-events-none cosmos-parallax-reverse absolute right-0 top-0 h-48 w-48 rounded-full bg-[radial-gradient(circle,rgba(244,215,161,0.14),rgba(244,215,161,0))] blur-3xl" />
+          <div className="pointer-events-none absolute inset-x-8 bottom-10 h-px bg-gradient-to-r from-transparent via-white/16 to-transparent" />
 
           <div className="relative">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs uppercase tracking-[0.3em] text-slate-300/72">
@@ -151,11 +157,12 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
           className="space-y-4"
         >
           <MoonPhase />
-          <div className="rounded-[28px] border border-white/10 bg-[rgba(8,20,35,0.7)] p-4 shadow-[0_22px_70px_rgba(2,6,16,0.26)] backdrop-blur-2xl">
+          <div className="cosmos-camera relative overflow-hidden rounded-[28px] border border-white/10 bg-[rgba(8,20,35,0.7)] p-4 shadow-[0_22px_70px_rgba(2,6,16,0.26)] backdrop-blur-2xl">
+            <div className="pointer-events-none cosmos-parallax-slow absolute -right-6 top-0 h-20 w-20 rounded-full bg-[radial-gradient(circle,rgba(244,215,161,0.14),rgba(244,215,161,0))] blur-2xl" />
             <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/60">Entry Ritual</p>
             <h3 className="mt-2 text-lg font-semibold text-white">新星将如何诞生</h3>
             <p className="mt-3 text-sm leading-7 text-slate-300/78">
-              当你点亮一颗星，它会先在写作仪式里聚光，然后以流星轨迹飞入对应星云。若是全新主题，它会自己点亮一团新的星云核。
+              当你点亮一颗星，它会先在书写仪式里聚光，然后以流星轨迹飞入对应星云。若是全新主题，它会自己点亮一团新的星云核。
             </p>
           </div>
         </motion.div>
@@ -167,6 +174,7 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
           stats={stats}
           activeTag={activeTag}
           selectedEntry={selectedEntry}
+          showDetailOverlay={selectedEntrySource === "canvas"}
           recentEntryId={recentEntryId}
           viewMode="compact"
           showExpandButton
@@ -177,19 +185,25 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
           }}
           onSelectEntry={(entry) => {
             setSelectedEntry(entry);
+            setSelectedEntrySource("canvas");
             setHomeMode("nebula");
           }}
-          onDismissDetail={() => setSelectedEntry(null)}
+          onDismissDetail={() => {
+            setSelectedEntry(null);
+            setSelectedEntrySource(null);
+          }}
         />
 
         <div className="pointer-events-none absolute inset-x-0 bottom-6 z-30 hidden justify-center lg:flex">
-          <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-white/10 bg-[rgba(8,20,35,0.6)] p-2 shadow-[0_24px_70px_rgba(2,6,16,0.3)] backdrop-blur-xl">
+          <div className="cosmos-camera pointer-events-auto relative flex items-center gap-2 overflow-hidden rounded-full border border-white/10 bg-[rgba(8,20,35,0.6)] p-2 shadow-[0_24px_70px_rgba(2,6,16,0.3)] backdrop-blur-xl">
+            <div className="pointer-events-none cosmos-parallax-slow absolute left-[10%] top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(143,176,214,0.16),rgba(143,176,214,0))] blur-2xl" />
+            <div className="pointer-events-none cosmos-parallax-reverse absolute right-[8%] top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(244,215,161,0.16),rgba(244,215,161,0))] blur-2xl" />
             {homeModes.map((mode) => (
               <button
                 key={mode.id}
                 type="button"
                 onClick={() => setHomeMode(mode.id)}
-                className={`rounded-full px-4 py-2 text-sm transition ${
+                className={`relative rounded-full px-4 py-2 text-sm transition ${
                   homeMode === mode.id
                     ? "bg-[#f4d7a1]/18 text-[#f6e8ca] shadow-[0_0_20px_rgba(244,215,161,0.16)]"
                     : "text-slate-300/78 hover:bg-white/10"
@@ -232,11 +246,18 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
                   stats={stats}
                   activeTag={activeTag}
                   selectedEntry={selectedEntry}
+                  showDetailOverlay={selectedEntrySource === "canvas"}
                   recentEntryId={recentEntryId}
                   viewMode="expanded"
                   onSelectTag={(tag) => setActiveTag((current) => (current === tag ? "" : tag))}
-                  onSelectEntry={setSelectedEntry}
-                  onDismissDetail={() => setSelectedEntry(null)}
+                  onSelectEntry={(entry) => {
+                    setSelectedEntry(entry);
+                    setSelectedEntrySource("canvas");
+                  }}
+                  onDismissDetail={() => {
+                    setSelectedEntry(null);
+                    setSelectedEntrySource(null);
+                  }}
                 />
               </div>
             </div>
@@ -279,7 +300,10 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
                     <button
                       key={entry.id}
                       type="button"
-                      onClick={() => setSelectedEntry(entry)}
+                      onClick={() => {
+                        setSelectedEntry(entry);
+                        setSelectedEntrySource("archive");
+                      }}
                       className={`rounded-[24px] border p-4 text-left transition ${
                         selectedEntry?.id === entry.id
                           ? "border-white/20 bg-[#13253c]"
