@@ -74,7 +74,7 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
   return (
     <div className="relative pb-28 pt-40 md:pt-36">
       <div className="mb-4 flex justify-end lg:mb-0">
-        <div className="w-full max-w-[280px] lg:absolute lg:right-0 lg:top-0 lg:z-20">
+        <div className="w-full max-w-[280px] lg:absolute lg:right-0 lg:top-8 lg:z-40">
           <MoonPhase />
         </div>
       </div>
