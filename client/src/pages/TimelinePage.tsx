@@ -34,6 +34,8 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
   const [isUniverseExpanded, setIsUniverseExpanded] = useState(false);
   const [deletingEntryId, setDeletingEntryId] = useState<string | null>(null);
   const universeSectionRef = useRef<HTMLDivElement | null>(null);
+  const detailPanelRef = useRef<HTMLDivElement | null>(null);
+  const handledRecentEntryIdRef = useRef<string | null>(null);
 
   const filteredEntries = useMemo(() => {
     if (!activeTag) {
@@ -51,22 +53,11 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
       return;
     }
 
-    if (recentEntryId) {
-      const recent =
-        filteredEntries.find((entry) => entry.id === recentEntryId) || entries.find((entry) => entry.id === recentEntryId);
-      if (recent) {
-        setSelectedEntry(null);
-        setSelectedEntrySource(null);
-        setHomeMode("nebula");
-        return;
-      }
-    }
-
     if (selectedEntry && !filteredEntries.some((entry) => entry.id === selectedEntry.id)) {
       setSelectedEntry(null);
       setSelectedEntrySource(null);
     }
-  }, [entries, filteredEntries, recentEntryId, selectedEntry]);
+  }, [filteredEntries, selectedEntry]);
 
   useEffect(() => {
     if (!isUniverseExpanded) {
@@ -85,6 +76,15 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
       return;
     }
 
+    if (handledRecentEntryIdRef.current === recentEntryId) {
+      return;
+    }
+
+    handledRecentEntryIdRef.current = recentEntryId;
+    setSelectedEntry(null);
+    setSelectedEntrySource(null);
+    setHomeMode("nebula");
+
     const timer = window.setTimeout(() => {
       universeSectionRef.current?.scrollIntoView({
         behavior: "smooth",
@@ -96,6 +96,25 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
       window.clearTimeout(timer);
     };
   }, [recentEntryId]);
+
+  function focusDetailPanel() {
+    window.setTimeout(() => {
+      detailPanelRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest"
+      });
+    }, 120);
+  }
+
+  function openEntryDetail(entry: Entry, source: "canvas" | "archive", nextMode: HomeMode = "nebula") {
+    setSelectedEntry(entry);
+    setSelectedEntrySource(source);
+    setHomeMode(nextMode);
+
+    if (source === "archive") {
+      focusDetailPanel();
+    }
+  }
 
   async function handleDeleteEntry(entry: Entry) {
     if (deletingEntryId) {
@@ -327,11 +346,13 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
         {homeMode === "nebula" ? (
           <>
             <div className="space-y-6">
-              <CosmicDetailPanel
-                entry={selectedEntry || undefined}
-                isDeleting={selectedEntry ? deletingEntryId === selectedEntry.id : false}
-                onDelete={handleDeleteEntry}
-              />
+              <div ref={detailPanelRef}>
+                <CosmicDetailPanel
+                  entry={selectedEntry || undefined}
+                  isDeleting={selectedEntry ? deletingEntryId === selectedEntry.id : false}
+                  onDelete={handleDeleteEntry}
+                />
+              </div>
               <section className="rounded-[32px] border border-white/10 bg-white/6 p-4 backdrop-blur-xl">
                 <div className="mb-4 flex items-center justify-between gap-4">
                   <div>
@@ -354,10 +375,7 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
                     <button
                       key={entry.id}
                       type="button"
-                      onClick={() => {
-                        setSelectedEntry(entry);
-                        setSelectedEntrySource("archive");
-                      }}
+                      onClick={() => openEntryDetail(entry, "archive")}
                       className={`rounded-[24px] border p-4 text-left transition ${
                         selectedEntry?.id === entry.id
                           ? "border-white/20 bg-[#13253c]"
@@ -388,7 +406,7 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
         {homeMode === "observe" ? (
           <>
             <ObservationDeck stats={stats} entries={filteredEntries} />
-            <div className="2xl:sticky 2xl:top-28 2xl:self-start">
+            <div ref={detailPanelRef} className="2xl:sticky 2xl:top-28 2xl:self-start">
               <CosmicDetailPanel
                 entry={selectedEntry || undefined}
                 isDeleting={selectedEntry ? deletingEntryId === selectedEntry.id : false}
