@@ -72,8 +72,8 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
   }, [isUniverseExpanded]);
 
   return (
-    <div className="relative pb-28 pt-44 md:pt-40">
-      <div className="mb-6 flex justify-end">
+    <div className="relative pb-28 pt-[19rem] md:pt-[18rem]">
+      <div className="mb-8 flex justify-end">
         <div className="relative z-30 w-full max-w-[280px]">
           <MoonPhase />
         </div>
