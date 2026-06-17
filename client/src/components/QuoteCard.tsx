@@ -54,16 +54,18 @@ export function QuoteCard({ latestEntry }: QuoteCardProps) {
   }, [emotion, latestEntry]);
 
   const weatherLine = latestEntry
-    ? `${latestEntry.tags.slice(0, 2).map((tag) => `#${tag}`).join(" · ")} 正在今天的天空里发亮。`
+    ? `${latestEntry.tags.slice(0, 2).map((tag) => `#${tag}`).join(" · ")} 正在今晚的天空里发亮。`
     : "今晚的宇宙还很安静，等第一颗新星点亮。";
 
   return (
     <motion.aside
-      animate={{ width: collapsed ? 96 : 320 }}
+      animate={{ width: collapsed ? 102 : 332 }}
       transition={{ type: "spring", stiffness: 220, damping: 24 }}
-      className="pointer-events-auto relative z-40 w-full max-w-[320px] overflow-hidden rounded-[28px] border border-white/10 bg-[rgba(8,20,35,0.68)] shadow-[0_24px_60px_rgba(2,6,16,0.24)] backdrop-blur-xl"
+      className="pointer-events-auto relative z-40 w-full max-w-[332px] overflow-hidden rounded-[28px] border border-white/10 bg-[rgba(8,20,35,0.72)] shadow-[0_24px_70px_rgba(2,6,16,0.3)] backdrop-blur-2xl"
     >
-      <div className="flex items-center justify-between gap-3 px-4 py-3">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-r from-[rgba(143,176,214,0.14)] via-transparent to-[rgba(244,215,161,0.12)]" />
+
+      <div className="relative flex items-center justify-between gap-3 px-4 py-3">
         <div className={collapsed ? "hidden" : "block"}>
           <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/60">Today Card</p>
           <h2 className="mt-1 text-sm font-medium text-slate-100">今日心情卡</h2>

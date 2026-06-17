@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { X } from "lucide-react";
+import { Sparkles, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { BottomNav } from "../components/BottomNav";
 import { CosmicCanvas } from "../components/CosmicCanvas";
@@ -22,7 +22,7 @@ type HomeMode = "nebula" | "observe" | "write";
 const homeModes: Array<{ id: HomeMode; label: string; description: string }> = [
   { id: "nebula", label: "星云", description: "查看星体详情与回声档案" },
   { id: "observe", label: "观星", description: "查看主题、类型与信号摘要" },
-  { id: "write", label: "写下星星", description: "直接进入记录与补充" }
+  { id: "write", label: "写下星星", description: "直接进入记录与补全" }
 ];
 
 export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: TimelinePageProps) {
@@ -37,6 +37,8 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
     }
     return entries.filter((entry) => entry.tags.includes(activeTag));
   }, [activeTag, entries]);
+
+  const topTags = useMemo(() => (stats?.tags || []).slice(0, 3), [stats]);
 
   useEffect(() => {
     if (filteredEntries.length === 0) {
@@ -72,12 +74,92 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
   }, [isUniverseExpanded]);
 
   return (
-    <div className="relative pb-28 pt-[19rem] md:pt-[18rem]">
-      <div className="mb-8 flex justify-end">
-        <div className="relative z-30 w-full max-w-[280px]">
+    <div className="relative pb-28 pt-[17rem] md:pt-[15.5rem]">
+      <section className="relative mb-8 grid gap-6 lg:grid-cols-[minmax(0,1.45fr)_320px]">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, ease: "easeOut" }}
+          className="relative overflow-hidden rounded-[36px] border border-white/10 bg-[linear-gradient(145deg,rgba(10,18,34,0.92),rgba(5,12,24,0.78))] p-6 shadow-[0_30px_100px_rgba(2,6,16,0.32)] backdrop-blur-2xl md:p-8"
+        >
+          <div className="pointer-events-none absolute -left-12 top-6 h-40 w-40 rounded-full bg-[radial-gradient(circle,rgba(143,176,214,0.18),rgba(143,176,214,0))] blur-3xl" />
+          <div className="pointer-events-none absolute right-0 top-0 h-48 w-48 rounded-full bg-[radial-gradient(circle,rgba(244,215,161,0.14),rgba(244,215,161,0))] blur-3xl" />
+
+          <div className="relative">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs uppercase tracking-[0.3em] text-slate-300/72">
+              <Sparkles size={14} />
+              Private Cosmos Archive
+            </div>
+
+            <h2 className="mt-5 max-w-3xl text-3xl font-semibold tracking-tight text-white md:text-5xl md:leading-[1.08]">
+              你的记录，不再只是笔记。
+              <br />
+              它们会在深空里长成星群。
+            </h2>
+
+            <p className="mt-5 max-w-2xl text-sm leading-7 text-slate-300/78 md:text-[15px]">
+              每一次反思、听播客、看展、听音乐、运动或对话之后留下的文字，都会被送进一座活体宇宙档案馆。主题会聚成星云，关键词会点亮成恒星，细微的波动则留下自己的轨道。
+            </p>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              {topTags.length > 0 ? (
+                topTags.map((tag) => (
+                  <button
+                    key={tag.tag}
+                    type="button"
+                    onClick={() => {
+                      setActiveTag((current) => (current === tag.tag ? "" : tag.tag));
+                      setHomeMode("nebula");
+                    }}
+                    className="rounded-full border border-white/10 bg-white/8 px-4 py-2 text-sm text-slate-200/84 transition hover:bg-white/12"
+                  >
+                    #{tag.tag} · {tag.count}
+                  </button>
+                ))
+              ) : (
+                <div className="rounded-full border border-white/10 bg-white/8 px-4 py-2 text-sm text-slate-200/80">
+                  写下第一颗星，宇宙就会开始回应你。
+                </div>
+              )}
+            </div>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              <div className="rounded-[24px] border border-white/8 bg-white/6 p-4">
+                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Stellar Count</p>
+                <p className="mt-2 text-3xl font-semibold text-white">{entries.length}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-300/74">已经归档的星体数量，会继续随着你的生活变多。</p>
+              </div>
+
+              <div className="rounded-[24px] border border-white/8 bg-white/6 p-4">
+                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Nebula Density</p>
+                <p className="mt-2 text-3xl font-semibold text-white">{stats?.tags.length || 0}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-300/74">当前宇宙里可见的主题星云数，会随着回声逐渐长出层次。</p>
+              </div>
+
+              <div className="rounded-[24px] border border-white/8 bg-white/6 p-4">
+                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Live Signal</p>
+                <p className="mt-2 text-base font-semibold text-white">{stats?.weeklySummary || "等待新的星体信号出现。"}</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.58, delay: 0.06, ease: "easeOut" }}
+          className="space-y-4"
+        >
           <MoonPhase />
-        </div>
-      </div>
+          <div className="rounded-[28px] border border-white/10 bg-[rgba(8,20,35,0.7)] p-4 shadow-[0_22px_70px_rgba(2,6,16,0.26)] backdrop-blur-2xl">
+            <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/60">Entry Ritual</p>
+            <h3 className="mt-2 text-lg font-semibold text-white">新星将如何诞生</h3>
+            <p className="mt-3 text-sm leading-7 text-slate-300/78">
+              当你点亮一颗星，它会先在写作仪式里聚光，然后以流星轨迹飞入对应星云。若是全新主题，它会自己点亮一团新的星云核。
+            </p>
+          </div>
+        </motion.div>
+      </section>
 
       <div className="relative">
         <CosmicCanvas
@@ -101,7 +183,7 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
         />
 
         <div className="pointer-events-none absolute inset-x-0 bottom-6 z-30 hidden justify-center lg:flex">
-          <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-white/10 bg-[rgba(8,20,35,0.58)] p-2 shadow-[0_24px_70px_rgba(2,6,16,0.28)] backdrop-blur-xl">
+          <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-white/10 bg-[rgba(8,20,35,0.6)] p-2 shadow-[0_24px_70px_rgba(2,6,16,0.3)] backdrop-blur-xl">
             {homeModes.map((mode) => (
               <button
                 key={mode.id}
@@ -126,7 +208,7 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[70] bg-[rgba(2,6,16,0.88)] p-3 backdrop-blur-xl md:p-6"
+            className="fixed inset-0 z-[70] bg-[rgba(2,6,16,0.9)] p-3 backdrop-blur-xl md:p-6"
           >
             <div className="flex h-full flex-col">
               <div className="mb-3 flex items-center justify-between gap-4">

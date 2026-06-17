@@ -54,3 +54,15 @@ textarea {
     transform: scale(1.12);
   }
 }
+
+@keyframes moonHaloPulse {
+  0%,
+  100% {
+    opacity: 0.34;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.08);
+  }
+}

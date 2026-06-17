@@ -13,7 +13,6 @@ function getMoonData(date: Date) {
 
   return {
     illumination,
-    cycle,
     phaseName: phaseNames[phaseIndex],
     waxing: normalized <= 0.5
   };
@@ -30,23 +29,29 @@ export function MoonPhase() {
   const moon = useMemo(() => getMoonData(now), [now]);
   const shadowWidth = Math.max(6, Math.abs(1 - moon.illumination * 2) * 42);
   const shadowX = moon.waxing ? 50 + shadowWidth * 0.38 : 50 - shadowWidth * 0.38;
+  const illuminationPercent = Math.round(moon.illumination * 100);
 
   return (
-    <section className="pointer-events-auto rounded-[28px] border border-white/10 bg-[rgba(10,19,34,0.58)] p-4 shadow-[0_24px_60px_rgba(2,6,16,0.22)] backdrop-blur-xl">
-      <div className="mb-3 flex items-center justify-between gap-3">
+    <section className="pointer-events-auto relative overflow-hidden rounded-[32px] border border-white/10 bg-[linear-gradient(160deg,rgba(9,18,34,0.92),rgba(7,13,25,0.78))] p-5 shadow-[0_28px_90px_rgba(2,6,16,0.32)] backdrop-blur-2xl">
+      <div className="pointer-events-none absolute -right-10 top-0 h-32 w-32 rounded-full bg-[radial-gradient(circle,rgba(244,215,161,0.18),rgba(244,215,161,0))] blur-3xl" />
+      <div className="pointer-events-none absolute left-6 top-6 h-px w-24 bg-gradient-to-r from-white/50 to-transparent" />
+
+      <div className="relative flex items-start justify-between gap-4">
         <div>
           <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/60">Moon Dial</p>
-          <h2 className="mt-1 text-sm font-medium text-slate-100">今夜月相</h2>
+          <h2 className="mt-1 text-base font-medium text-slate-50">今夜月相</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-300/72">它像一枚缓慢呼吸的天体装置，为今天保留一点潮汐感。</p>
         </div>
-        <div className="rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs text-slate-200/82">
-          {moon.phaseName}
-        </div>
+        <div className="rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs text-slate-200/82">{moon.phaseName}</div>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="relative h-20 w-20 shrink-0">
-          <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(243,237,226,0.24),transparent_70%)] blur-xl" />
-          <svg viewBox="0 0 100 100" className="relative h-20 w-20 animate-[spin_60s_linear_infinite]">
+      <div className="relative mt-6 flex items-center gap-5">
+        <div className="relative flex h-28 w-28 shrink-0 items-center justify-center">
+          <div className="absolute inset-0 rounded-full border border-white/10" />
+          <div className="absolute inset-3 rounded-full border border-dashed border-white/10 animate-[spin_30s_linear_infinite]" />
+          <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(243,237,226,0.22),transparent_72%)] blur-2xl" />
+
+          <svg viewBox="0 0 100 100" className="relative h-24 w-24 animate-[spin_80s_linear_infinite]">
             <defs>
               <radialGradient id="moonSurface" cx="38%" cy="32%">
                 <stop offset="0%" stopColor="#fffaf1" />
@@ -58,13 +63,27 @@ export function MoonPhase() {
             <circle cx="36" cy="34" r="7" fill="rgba(116,110,101,0.18)" />
             <circle cx="58" cy="58" r="10" fill="rgba(116,110,101,0.14)" />
             <circle cx="44" cy="68" r="5" fill="rgba(116,110,101,0.12)" />
-            <ellipse cx={shadowX} cy="50" rx={shadowWidth} ry="44" fill="rgba(8,18,32,0.84)" />
+            <ellipse cx={shadowX} cy="50" rx={shadowWidth} ry="44" fill="rgba(8,18,32,0.82)" />
           </svg>
         </div>
 
-        <div className="space-y-1.5 text-sm leading-6 text-slate-300/78">
-          <p>光照比例 {Math.round(moon.illumination * 100)}%</p>
-          <p>它像一只缓慢转动的钟，替今天留下一点潮汐感。</p>
+        <div className="flex-1 space-y-3">
+          <div className="rounded-[22px] border border-white/8 bg-white/6 p-3">
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <span className="text-slate-200">光照比例</span>
+              <span className="text-slate-100">{illuminationPercent}%</span>
+            </div>
+            <div className="mt-3 h-2 rounded-full bg-white/8">
+              <div
+                className="h-2 rounded-full bg-gradient-to-r from-[#8fb0d6] via-[#ddd4c8] to-[#f4d7a1]"
+                style={{ width: `${Math.max(illuminationPercent, 8)}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="rounded-[22px] border border-white/8 bg-[rgba(255,255,255,0.04)] p-3 text-sm leading-6 text-slate-300/80">
+            今晚的月亮不解释一切，只提醒你：有些体验适合被照亮，有些体验适合先悬在光边缘。
+          </div>
         </div>
       </div>
     </section>
