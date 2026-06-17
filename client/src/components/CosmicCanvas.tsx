@@ -9,6 +9,7 @@ interface CosmicCanvasProps {
   stats: DashboardStats | null;
   activeTag: string;
   selectedEntry?: Entry | null;
+  deletingEntryId?: string | null;
   showDetailOverlay?: boolean;
   recentEntryId?: string;
   viewMode?: "compact" | "expanded";
@@ -16,6 +17,7 @@ interface CosmicCanvasProps {
   onSelectTag: (tag: string) => void;
   onSelectEntry: (entry: Entry) => void;
   onDismissDetail: () => void;
+  onDeleteEntry?: (entry: Entry) => void | Promise<void>;
   onRequestExpand?: () => void;
 }
 
@@ -152,6 +154,7 @@ export function CosmicCanvas({
   stats,
   activeTag,
   selectedEntry,
+  deletingEntryId = null,
   showDetailOverlay = true,
   recentEntryId,
   viewMode = "compact",
@@ -159,6 +162,7 @@ export function CosmicCanvas({
   onSelectTag,
   onSelectEntry,
   onDismissDetail,
+  onDeleteEntry,
   onRequestExpand
 }: CosmicCanvasProps) {
   const [showArrival, setShowArrival] = useState(false);
@@ -1160,14 +1164,26 @@ export function CosmicCanvas({
                       <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/60">Stellar Overlay</p>
                       <h3 className="mt-2 text-lg font-semibold text-white md:text-xl">{selectedEntry.title || selectedEntry.summary}</h3>
                     </div>
-                    <button
-                      type="button"
-                      onClick={onDismissDetail}
-                      className="rounded-full border border-white/10 bg-white/6 p-2 text-slate-200/84 transition hover:bg-white/10"
-                      aria-label="关闭详情"
-                    >
-                      <X size={16} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {onDeleteEntry ? (
+                        <button
+                          type="button"
+                          onClick={() => void onDeleteEntry(selectedEntry)}
+                          disabled={deletingEntryId === selectedEntry.id}
+                          className="rounded-full border border-rose-300/16 bg-rose-200/10 px-3 py-2 text-xs text-rose-100 transition hover:bg-rose-200/16 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {deletingEntryId === selectedEntry.id ? "删除中..." : "删除"}
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={onDismissDetail}
+                        className="rounded-full border border-white/10 bg-white/6 p-2 text-slate-200/84 transition hover:bg-white/10"
+                        aria-label="关闭详情"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-400">

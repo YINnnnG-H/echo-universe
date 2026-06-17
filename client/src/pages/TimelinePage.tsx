@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Sparkles, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BottomNav } from "../components/BottomNav";
 import { CosmicCanvas } from "../components/CosmicCanvas";
 import { CosmicDetailPanel } from "../components/CosmicDetailPanel";
@@ -8,6 +8,7 @@ import { EntryForm } from "../components/EntryForm";
 import { MoonPhase } from "../components/MoonPhase";
 import { ObservationDeck } from "../components/ObservationDeck";
 import { QuoteCard } from "../components/QuoteCard";
+import { api } from "../services/api";
 import type { DashboardStats, Entry } from "../types";
 
 interface TimelinePageProps {
@@ -31,6 +32,8 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
   const [selectedEntrySource, setSelectedEntrySource] = useState<"canvas" | "archive" | null>(null);
   const [homeMode, setHomeMode] = useState<HomeMode>("nebula");
   const [isUniverseExpanded, setIsUniverseExpanded] = useState(false);
+  const [deletingEntryId, setDeletingEntryId] = useState<string | null>(null);
+  const universeSectionRef = useRef<HTMLDivElement | null>(null);
 
   const filteredEntries = useMemo(() => {
     if (!activeTag) {
@@ -76,6 +79,49 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
       document.body.style.overflow = previous;
     };
   }, [isUniverseExpanded]);
+
+  useEffect(() => {
+    if (!recentEntryId) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      universeSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }, 180);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [recentEntryId]);
+
+  async function handleDeleteEntry(entry: Entry) {
+    if (deletingEntryId) {
+      return;
+    }
+
+    const confirmed =
+      typeof window === "undefined"
+        ? true
+        : window.confirm(`确认删除这颗星吗？\n\n${entry.title || entry.summary}\n\n删除后将无法恢复。`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingEntryId(entry.id);
+
+    try {
+      await api.deleteEntry(entry.id);
+      setSelectedEntry(null);
+      setSelectedEntrySource(null);
+      await onRefresh();
+    } finally {
+      setDeletingEntryId(null);
+    }
+  }
 
   return (
     <div className="relative pb-28 pt-[17rem] md:pt-[15.5rem]">
@@ -168,12 +214,13 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
         </motion.div>
       </section>
 
-      <div className="relative">
+      <div ref={universeSectionRef} className="relative">
         <CosmicCanvas
           entries={entries}
           stats={stats}
           activeTag={activeTag}
           selectedEntry={selectedEntry}
+          deletingEntryId={deletingEntryId}
           showDetailOverlay={selectedEntrySource === "canvas"}
           recentEntryId={recentEntryId}
           viewMode="compact"
@@ -192,6 +239,7 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
             setSelectedEntry(null);
             setSelectedEntrySource(null);
           }}
+          onDeleteEntry={handleDeleteEntry}
         />
 
         <div className="pointer-events-none absolute inset-x-0 bottom-6 z-30 hidden justify-center lg:flex">
@@ -246,6 +294,7 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
                   stats={stats}
                   activeTag={activeTag}
                   selectedEntry={selectedEntry}
+                  deletingEntryId={deletingEntryId}
                   showDetailOverlay={selectedEntrySource === "canvas"}
                   recentEntryId={recentEntryId}
                   viewMode="expanded"
@@ -258,6 +307,7 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
                     setSelectedEntry(null);
                     setSelectedEntrySource(null);
                   }}
+                  onDeleteEntry={handleDeleteEntry}
                 />
               </div>
             </div>
@@ -277,7 +327,11 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
         {homeMode === "nebula" ? (
           <>
             <div className="space-y-6">
-              <CosmicDetailPanel entry={selectedEntry || undefined} />
+              <CosmicDetailPanel
+                entry={selectedEntry || undefined}
+                isDeleting={selectedEntry ? deletingEntryId === selectedEntry.id : false}
+                onDelete={handleDeleteEntry}
+              />
               <section className="rounded-[32px] border border-white/10 bg-white/6 p-4 backdrop-blur-xl">
                 <div className="mb-4 flex items-center justify-between gap-4">
                   <div>
@@ -335,7 +389,11 @@ export function TimelinePage({ entries, stats, onRefresh, recentEntryId }: Timel
           <>
             <ObservationDeck stats={stats} entries={filteredEntries} />
             <div className="2xl:sticky 2xl:top-28 2xl:self-start">
-              <CosmicDetailPanel entry={selectedEntry || undefined} />
+              <CosmicDetailPanel
+                entry={selectedEntry || undefined}
+                isDeleting={selectedEntry ? deletingEntryId === selectedEntry.id : false}
+                onDelete={handleDeleteEntry}
+              />
             </div>
           </>
         ) : null}
