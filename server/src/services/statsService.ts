@@ -1,8 +1,15 @@
 import type { DashboardStats, EmotionPoint, Entry, PersonalityTimeline, TagStat, TypeStat } from "../types.js";
-import { ARCHETYPE_KEYS, ENTRY_TYPE_LABELS } from "../utils/constants.js";
+import { ARCHETYPE_KEYS, CORE_INDICATOR_KEYS, ENTRY_TYPE_LABELS } from "../utils/constants.js";
 
 function toDateKey(timestamp: string) {
   return timestamp.slice(0, 10);
+}
+
+function toNumeric(value: number | boolean | undefined) {
+  if (typeof value === "boolean") {
+    return value ? 1 : 0;
+  }
+  return typeof value === "number" ? Number(value) : 0;
 }
 
 function buildTagStats(entries: Entry[]): TagStat[] {
@@ -46,15 +53,14 @@ function buildPersonalityTimeline(entries: Entry[]): PersonalityTimeline {
     Object.keys(entry.personality_indicators).forEach((key) => indicatorSet.add(key));
   }
 
+  const orderedIndicators = [
+    ...CORE_INDICATOR_KEYS.filter((key) => indicatorSet.has(key)),
+    ...[...indicatorSet].filter((key) => !CORE_INDICATOR_KEYS.includes(key as (typeof CORE_INDICATOR_KEYS)[number]))
+  ];
+
   const data: Record<string, number[]> = {};
-  for (const indicator of indicatorSet) {
-    data[indicator] = sortedEntries.map((entry) => {
-      const value = entry.personality_indicators[indicator];
-      if (typeof value === "boolean") {
-        return value ? 1 : 0;
-      }
-      return typeof value === "number" ? Number(value) : 0;
-    });
+  for (const indicator of orderedIndicators) {
+    data[indicator] = sortedEntries.map((entry) => toNumeric(entry.personality_indicators[indicator]));
   }
 
   return { timeline, data };
@@ -88,15 +94,13 @@ function buildArchetypeSummary(entries: Entry[]) {
     result[key] = 0;
   }
 
-  for (const entry of entries) {
-    for (const key of ARCHETYPE_KEYS) {
-      const value = entry.personality_indicators[key];
-      if (typeof value === "number") {
-        result[key] += Number(value.toFixed(2));
-      } else if (value === true) {
-        result[key] += 1;
-      }
-    }
+  if (entries.length === 0) {
+    return result;
+  }
+
+  for (const key of ARCHETYPE_KEYS) {
+    const total = entries.reduce((sum, entry) => sum + toNumeric(entry.personality_indicators[key]), 0);
+    result[key] = Number((total / entries.length).toFixed(2));
   }
 
   return result;
@@ -134,11 +138,12 @@ function buildWeeklySummary(entries: Entry[], tagStats: TagStat[]) {
   const latest = entries[0];
   const topTags = tagStats.slice(0, 3).map((item) => `#${item.tag}`).join(" · ");
   const strongestIndicator = Object.entries(latest.personality_indicators)
-    .map(([key, value]) => [key, typeof value === "boolean" ? (value ? 1 : 0) : value] as const)
+    .filter(([key]) => !ARCHETYPE_KEYS.includes(key as (typeof ARCHETYPE_KEYS)[number]))
+    .map(([key, value]) => [key, toNumeric(value)] as const)
     .sort((a, b) => b[1] - a[1])[0];
   const latestType = ENTRY_TYPE_LABELS[latest.entry_type];
 
-  return `这周你最常回到 ${topTags || "#自我观察"}，最近一条${latestType}里最突出的信号是 ${strongestIndicator?.[0] || "自我观察"}。`;
+  return `这一周你最常回到 ${topTags || "#自我观察"}，最近一条${latestType}里最明显的信号是 ${strongestIndicator?.[0] || "反思深度"}。`;
 }
 
 export function buildDashboardStats(entries: Entry[]): DashboardStats {

@@ -11,7 +11,6 @@ const panelClass = "rounded-[28px] border border-white/10 bg-white/6 p-4 shadow-
 export function ChartsPanel({ stats }: ChartsPanelProps) {
   const timelineIndicators = Object.entries(stats.personality.data).slice(0, 6);
   const archetypeValues = Object.values(stats.archetypes);
-  const archetypeMax = Math.max(1, ...archetypeValues.map((value) => Math.ceil(value)));
 
   const lineOption = {
     color: chartColors,
@@ -72,7 +71,7 @@ export function ChartsPanel({ stats }: ChartsPanelProps) {
         }
       },
       splitLine: { lineStyle: { color: "rgba(255,255,255,0.08)" } },
-      indicator: Object.keys(stats.archetypes).map((key) => ({ name: key, max: archetypeMax }))
+      indicator: Object.keys(stats.archetypes).map((key) => ({ name: key, max: 1 }))
     },
     series: [
       {
@@ -80,7 +79,7 @@ export function ChartsPanel({ stats }: ChartsPanelProps) {
         data: [
           {
             value: archetypeValues,
-            name: "原型活跃度",
+            name: "叙事原型活跃度",
             areaStyle: { color: "rgba(244,215,161,0.24)" },
             lineStyle: { color: "#f4d7a1" },
             symbol: "circle",
@@ -202,17 +201,17 @@ export function ChartsPanel({ stats }: ChartsPanelProps) {
       <section className={`${panelClass} xl:col-span-2`}>
         <div className="mb-3">
           <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/60">Signal Drift</p>
-          <h2 className="text-lg font-semibold text-white">人格信号变化曲线</h2>
+          <h2 className="text-lg font-semibold text-white">连续维度变化曲线</h2>
         </div>
         <ReactECharts option={lineOption} style={{ height: 340 }} />
       </section>
 
       <section className={panelClass}>
         <div className="mb-3">
-          <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/60">Archetype Field</p>
-          <h2 className="text-lg font-semibold text-white">原型活跃度</h2>
+          <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/60">Narrative Field</p>
+          <h2 className="text-lg font-semibold text-white">叙事原型活跃度</h2>
           <p className="mt-2 text-sm leading-6 text-slate-300/72">
-            这里不是靠你显式写出“战士”或“智者”才计分，而是由主题、情绪、关系处理方式、行动感和恢复信号综合推断。
+            这里展示的是叙事母题的平均活跃度，不是人格定论。它会参考主题、行动感、关系处理和恢复线索，而不是只看你有没有写出某个原型名字。
           </p>
         </div>
         <ReactECharts option={radarOption} style={{ height: 320 }} />

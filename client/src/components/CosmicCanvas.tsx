@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Maximize2, X } from "lucide-react";
+import { Maximize2, Sparkles, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { DashboardStats, Entry } from "../types";
 import { emotionLabel, formatDate, typeLabel } from "../utils/format";
@@ -28,6 +28,7 @@ type StarNode = {
 };
 
 const nebulaPalette = ["#7d79b7", "#8daa91", "#b98fa1", "#7fa7c9", "#d4a373", "#93b4d6"];
+const archetypeKeys = new Set(["孤儿原型", "战士原型", "疗愈者原型", "女王原型", "智者原型", "寻找者原型"]);
 
 function polarPosition(index: number, total: number, radius: number, centerX: number, centerY: number, angleOffset = 0) {
   const angle = angleOffset + (Math.PI * 2 * index) / Math.max(total, 1);
@@ -35,6 +36,10 @@ function polarPosition(index: number, total: number, radius: number, centerX: nu
     x: centerX + Math.cos(angle) * radius,
     y: centerY + Math.sin(angle) * radius
   };
+}
+
+function clampRange(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
 }
 
 function stableSortTags(entries: Entry[], stats: DashboardStats | null) {
@@ -90,12 +95,24 @@ export function CosmicCanvas({
     return ranked.slice(0, isExpanded ? 8 : 4).map((item) => ({ tag: item.tag, count: item.count }));
   }, [entries, isExpanded, stats]);
 
+  const compactHeight = useMemo(
+    () => clampRange(450 + featuredTags.length * 38 + entries.length * 24, 500, 860),
+    [entries.length, featuredTags.length]
+  );
+  const expandedHeight = useMemo(
+    () => clampRange(560 + featuredTags.length * 26 + entries.length * 18, 650, 980),
+    [entries.length, featuredTags.length]
+  );
+  const sectionHeightStyle = isExpanded
+    ? { height: `min(${expandedHeight}px, calc(100vh - 180px))`, minHeight: "650px" }
+    : { minHeight: `${compactHeight}px` };
+
   const backgroundStars = useMemo(
     () =>
       Array.from({ length: isExpanded ? 128 : 72 }, (_, index) => {
         const x = ((index * 37) % 100) + ((index % 3) * 0.7);
         const y = ((index * 29) % 100) + ((index % 5) * 0.5);
-        const quietZone = x < 36 && y < 30;
+        const quietZone = x < 34 && y < 28;
         return {
           id: `bg-${index}`,
           x: quietZone ? x + 28 : x % 100,
@@ -115,8 +132,12 @@ export function CosmicCanvas({
   }, [featuredTags]);
 
   const constellations = useMemo(() => {
+    if (featuredTags.length === 0) {
+      return [];
+    }
+
     return featuredTags.map((tag, index) => {
-      const center = polarPosition(index, featuredTags.length, isExpanded ? 26 : 21, 61, 50, -Math.PI / 5);
+      const center = polarPosition(index, featuredTags.length, isExpanded ? 26 : 20, 61, 52, -Math.PI / 5);
       const satellites = entries
         .filter((entry) => entry.tags.includes(tag.tag))
         .slice(0, isExpanded ? 6 : 3)
@@ -143,18 +164,18 @@ export function CosmicCanvas({
 
   const stars = useMemo<StarNode[]>(() => {
     const centerX = 61;
-    const centerY = 52;
-    const visibleEntries = entries.slice(0, isExpanded ? 28 : 12);
+    const centerY = 54;
+    const visibleEntries = entries.slice(0, isExpanded ? 28 : 14);
 
     return visibleEntries.map((entry, index) => {
-      const orbit = (isExpanded ? 16 : 12) + (index % 6) * (isExpanded ? 6.4 : 8.4) + Math.floor(index / 6) * (isExpanded ? 6 : 7);
+      const orbit = (isExpanded ? 16 : 11) + (index % 6) * (isExpanded ? 6 : 8) + Math.floor(index / 6) * (isExpanded ? 6 : 7);
       const offset = polarPosition(index, visibleEntries.length, orbit, centerX, centerY, Math.PI / 7);
       const tone = entry.tags.find((tag) => tagColorMap.has(tag));
 
       return {
         id: entry.id,
         entry,
-        size: (isExpanded ? 5.8 : 4.1) + Math.min(entry.tags.length, 5) * (isExpanded ? 1.7 : 1.05),
+        size: (isExpanded ? 5.6 : 4.2) + Math.min(entry.tags.length, 5) * (isExpanded ? 1.5 : 1),
         color: tone ? tagColorMap.get(tone) || "#93b4d6" : nebulaPalette[index % nebulaPalette.length],
         x: offset.x,
         y: offset.y
@@ -183,13 +204,29 @@ export function CosmicCanvas({
     };
   }, [constellations, recentEntryId, stars]);
 
+  const recentTrajectory = useMemo(() => {
+    if (!recentTarget) {
+      return null;
+    }
+
+    const startX = 18;
+    const startY = isExpanded ? 78 : 84;
+    const angle = (Math.atan2(recentTarget.y - startY, recentTarget.x - startX) * 180) / Math.PI;
+
+    return {
+      startX,
+      startY,
+      angle
+    };
+  }, [isExpanded, recentTarget]);
+
   useEffect(() => {
     if (!recentTarget) {
       return;
     }
 
     setShowArrival(true);
-    const timer = window.setTimeout(() => setShowArrival(false), 2600);
+    const timer = window.setTimeout(() => setShowArrival(false), 3200);
     return () => window.clearTimeout(timer);
   }, [recentTarget]);
 
@@ -197,11 +234,28 @@ export function CosmicCanvas({
     setLatestCardDismissed(false);
   }, [latestEntry?.id]);
 
+  const selectedIndicators = selectedEntry
+    ? Object.entries(selectedEntry.personality_indicators)
+        .filter(([key]) => !archetypeKeys.has(key))
+        .map(([key, value]) => ({ key, value: typeof value === "boolean" ? (value ? 1 : 0) : value }))
+        .sort((left, right) => right.value - left.value)
+        .slice(0, 4)
+    : [];
+
+  const selectedArchetypes = selectedEntry
+    ? Object.entries(selectedEntry.personality_indicators)
+        .filter(([key]) => archetypeKeys.has(key))
+        .map(([key, value]) => ({ key, value: typeof value === "boolean" ? (value ? 1 : 0) : value }))
+        .filter((item) => item.value >= 0.36)
+        .sort((left, right) => right.value - left.value)
+    : [];
+
   return (
     <section
       className={`relative overflow-hidden border border-white/10 bg-[#07111f]/76 shadow-[0_32px_90px_rgba(2,6,16,0.55)] ${
-        isExpanded ? "min-h-[82vh] rounded-[34px] md:min-h-[88vh]" : "min-h-[620px] rounded-[30px] md:min-h-[860px] md:rounded-[40px]"
+        isExpanded ? "rounded-[34px]" : "rounded-[30px] md:rounded-[40px]"
       }`}
+      style={sectionHeightStyle}
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(125,121,183,0.18),transparent_26%),radial-gradient(circle_at_20%_70%,rgba(143,170,145,0.16),transparent_24%),radial-gradient(circle_at_75%_35%,rgba(185,143,161,0.16),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(127,167,201,0.14),transparent_24%)]" />
       <div className="absolute inset-0 opacity-65 [background-image:radial-gradient(circle_at_center,rgba(255,255,255,0.9)_0.8px,transparent_0.8px)] [background-size:120px_120px]" />
@@ -243,14 +297,18 @@ export function CosmicCanvas({
         />
       ))}
 
-      <div className={`relative z-10 p-4 md:p-8 ${isExpanded ? "min-h-[82vh] md:min-h-[88vh]" : "min-h-[620px] md:min-h-[860px]"}`}>
+      <div className="relative z-10 h-full p-4 md:p-8">
         <div className={`pointer-events-none max-w-[540px] ${isExpanded ? "mb-4 pt-6 md:pt-8" : "mb-6 pt-20 md:mb-8 md:pt-28"}`}>
           <p className="text-[11px] uppercase tracking-[0.34em] text-slate-300/60">Private Cosmos</p>
-          <h2 className={`mt-3 max-w-[88%] font-semibold tracking-tight text-white drop-shadow-[0_6px_28px_rgba(3,8,18,0.55)] md:max-w-none ${isExpanded ? "text-xl md:text-4xl" : "text-2xl md:text-5xl"}`}>
+          <h2
+            className={`mt-3 max-w-[88%] font-semibold tracking-tight text-white drop-shadow-[0_6px_28px_rgba(3,8,18,0.55)] md:max-w-none ${
+              isExpanded ? "text-xl md:text-4xl" : "text-2xl md:text-5xl"
+            }`}
+          >
             每一段记录，都会在这里慢慢长成自己的星群。
           </h2>
           <p className="mt-4 max-w-lg text-sm leading-6 text-slate-300/80 md:text-base md:leading-7">
-            高频关键词成为恒星，相关记录成为它们的卫星，主题在时间里聚成不同颜色的星云。主页先保留呼吸感，放大后再进入细看。
+            高频关键词会成为恒星，相关记录会环绕成卫星，主题在时间里慢慢聚成不同颜色的星云。首页更轻盈，放大后再进入细看。
           </p>
         </div>
 
@@ -273,14 +331,25 @@ export function CosmicCanvas({
               <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/65">Layer Switch</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {["星云", "恒星", "卫星", "情绪潮汐"].map((label) => (
-                  <span
-                    key={label}
-                    className="rounded-full border border-white/10 bg-white/8 px-3 py-1.5 text-xs text-slate-200/78"
-                  >
+                  <span key={label} className="rounded-full border border-white/10 bg-white/8 px-3 py-1.5 text-xs text-slate-200/78">
                     {label}
                   </span>
                 ))}
               </div>
+            </div>
+          </div>
+        ) : null}
+
+        {entries.length === 0 ? (
+          <div className="absolute inset-x-4 bottom-8 top-[34%] z-20 flex items-center justify-center md:inset-x-10">
+            <div className="max-w-lg rounded-[30px] border border-white/10 bg-[rgba(8,20,35,0.54)] p-6 text-center shadow-[0_24px_80px_rgba(2,6,16,0.28)] backdrop-blur-2xl">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-white/8 text-[#f4d7a1]">
+                <Sparkles size={20} />
+              </div>
+              <h3 className="mt-4 text-2xl font-semibold text-white">你的宇宙还在等待第一颗星</h3>
+              <p className="mt-3 text-sm leading-7 text-slate-300/78">
+                写下一段播客感受、一场展览余波、一段对话、一场运动后的身体反馈，或今天最难忘的一次心跳。保存之后，它会像流星一样飞入对应的星云。
+              </p>
             </div>
           </div>
         ) : null}
@@ -357,7 +426,12 @@ export function CosmicCanvas({
                   className={`absolute z-20 -translate-x-1/2 -translate-y-1/2 rounded-full ${
                     selectedEntry?.id === satellite.entry.id ? "scale-125" : ""
                   }`}
-                  style={{ left: `${satellite.x}%`, top: `${satellite.y}%`, width: isExpanded ? "28px" : "22px", height: isExpanded ? "28px" : "22px" }}
+                  style={{
+                    left: `${satellite.x}%`,
+                    top: `${satellite.y}%`,
+                    width: isExpanded ? "28px" : "22px",
+                    height: isExpanded ? "28px" : "22px"
+                  }}
                 >
                   <div
                     className="mx-auto rounded-full border border-white/15 shadow-[0_0_22px_rgba(255,255,255,0.1)]"
@@ -392,7 +466,12 @@ export function CosmicCanvas({
               repeat: Number.POSITIVE_INFINITY,
               ease: "easeInOut"
             }}
-            style={{ left: `${star.x}%`, top: `${star.y}%`, width: isExpanded ? "26px" : "20px", height: isExpanded ? "26px" : "20px" }}
+            style={{
+              left: `${star.x}%`,
+              top: `${star.y}%`,
+              width: isExpanded ? "26px" : "20px",
+              height: isExpanded ? "26px" : "20px"
+            }}
           >
             <div
               className="mx-auto rounded-full blur-[0.35px]"
@@ -407,28 +486,67 @@ export function CosmicCanvas({
         ))}
 
         <AnimatePresence>
-          {showArrival && recentTarget ? (
-            <motion.div
-              key={recentEntryId}
-              initial={{ left: "18%", top: "82%", scale: 0.45, opacity: 0 }}
-              animate={{
-                left: `${recentTarget.x}%`,
-                top: `${recentTarget.y}%`,
-                scale: [0.45, 1.1, 0.9],
-                opacity: [0, 1, 0]
-              }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 2.4, ease: [0.16, 1, 0.3, 1] }}
-              className="pointer-events-none absolute z-30 -translate-x-1/2 -translate-y-1/2"
-            >
-              <div
-                className="h-4 w-4 rounded-full"
+          {showArrival && recentTarget && recentTrajectory ? (
+            <>
+              <motion.div
+                initial={{ opacity: 0, scaleX: 0.2 }}
+                animate={{ opacity: [0, 0.9, 0], scaleX: [0.2, 1, 1] }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 2.1, ease: [0.16, 1, 0.3, 1] }}
+                className="pointer-events-none absolute z-30 origin-left"
                 style={{
-                  background: `radial-gradient(circle, #fffaf1 0%, ${recentTarget.color} 58%, transparent 100%)`,
-                  boxShadow: `0 0 24px ${recentTarget.color}`
+                  left: `${recentTrajectory.startX}%`,
+                  top: `${recentTrajectory.startY}%`,
+                  width: "160px",
+                  height: "2px",
+                  transform: `rotate(${recentTrajectory.angle}deg)`,
+                  background: `linear-gradient(90deg, rgba(255,255,255,0) 0%, ${recentTarget.color}88 55%, ${recentTarget.color} 100%)`,
+                  boxShadow: `0 0 16px ${recentTarget.color}`
                 }}
               />
-            </motion.div>
+              <motion.div
+                initial={{ left: `${recentTrajectory.startX}%`, top: `${recentTrajectory.startY}%`, opacity: 0, scale: 0.5 }}
+                animate={{
+                  left: `${recentTarget.x}%`,
+                  top: `${recentTarget.y}%`,
+                  opacity: [0, 1, 1, 0],
+                  scale: [0.5, 1.2, 1, 0.8]
+                }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 2.3, ease: [0.16, 1, 0.3, 1] }}
+                className="pointer-events-none absolute z-40 -translate-x-1/2 -translate-y-1/2"
+              >
+                <div className="flex items-center" style={{ transform: `rotate(${recentTrajectory.angle}deg)` }}>
+                  <div
+                    className="h-[2px] w-16 rounded-full"
+                    style={{
+                      background: `linear-gradient(90deg, rgba(255,255,255,0), ${recentTarget.color})`
+                    }}
+                  />
+                  <div
+                    className="h-4 w-4 rounded-full"
+                    style={{
+                      background: `radial-gradient(circle, #fffaf1 0%, ${recentTarget.color} 58%, transparent 100%)`,
+                      boxShadow: `0 0 24px ${recentTarget.color}`
+                    }}
+                  />
+                </div>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.4 }}
+                animate={{ opacity: [0, 0.7, 0], scale: [0.4, 1.8, 2.2] }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.5, delay: 1.65, ease: "easeOut" }}
+                className="pointer-events-none absolute z-30 -translate-x-1/2 -translate-y-1/2 rounded-full border"
+                style={{
+                  left: `${recentTarget.x}%`,
+                  top: `${recentTarget.y}%`,
+                  width: "28px",
+                  height: "28px",
+                  borderColor: `${recentTarget.color}99`
+                }}
+              />
+            </>
           ) : null}
         </AnimatePresence>
 
@@ -481,15 +599,15 @@ export function CosmicCanvas({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={onDismissDetail}
-                className="absolute inset-0 z-20 cursor-default bg-[rgba(3,8,18,0.12)]"
+                className="absolute inset-0 z-20 cursor-default bg-[rgba(3,8,18,0.16)]"
                 aria-label="关闭星体详情"
               />
               <motion.aside
-                initial={{ opacity: 0, y: 36 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 18 }}
+                initial={{ opacity: 0, y: 36, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 18, scale: 0.98 }}
                 transition={{ duration: 0.3, ease: [0.2, 1, 0.32, 1] }}
-                className="absolute inset-x-3 bottom-3 z-30 rounded-[24px] border border-white/10 bg-[rgba(8,20,35,0.9)] p-4 shadow-[0_28px_80px_rgba(2,6,16,0.36)] backdrop-blur-xl md:inset-x-auto md:right-6 md:top-[22%] md:w-[380px] md:bottom-auto"
+                className="absolute inset-x-3 bottom-3 z-30 rounded-[24px] border border-white/10 bg-[rgba(8,20,35,0.9)] p-4 shadow-[0_28px_80px_rgba(2,6,16,0.36)] backdrop-blur-xl md:inset-x-auto md:right-6 md:top-[18%] md:w-[380px] md:bottom-auto"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -515,6 +633,7 @@ export function CosmicCanvas({
                 </div>
 
                 <p className="mt-3 text-sm leading-6 text-slate-200/84">{selectedEntry.summary}</p>
+
                 <div className="mt-4 flex flex-wrap gap-2">
                   {selectedEntry.tags.slice(0, 5).map((tag) => (
                     <span key={tag} className="rounded-full border border-white/10 bg-white/8 px-3 py-1 text-xs text-slate-200/84">
@@ -523,31 +642,31 @@ export function CosmicCanvas({
                   ))}
                 </div>
 
+                {selectedArchetypes.length > 0 ? (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {selectedArchetypes.map((item) => (
+                      <span key={item.key} className="rounded-full border border-white/10 bg-[#f4d7a1]/12 px-3 py-1 text-xs text-[#f6e8ca]">
+                        {item.key} {item.value.toFixed(2)}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  {Object.entries(selectedEntry.personality_indicators)
-                    .sort((a, b) => {
-                      const left = typeof a[1] === "boolean" ? (a[1] ? 1 : 0) : a[1];
-                      const right = typeof b[1] === "boolean" ? (b[1] ? 1 : 0) : b[1];
-                      return right - left;
-                    })
-                    .slice(0, 4)
-                    .map(([key, value]) => {
-                      const numeric = typeof value === "boolean" ? (value ? 1 : 0) : value;
-                      return (
-                        <div key={key} className="rounded-2xl bg-white/6 p-3">
-                          <div className="flex items-center justify-between gap-2 text-sm">
-                            <span className="text-slate-200">{key}</span>
-                            <span className="text-slate-300/80">{numeric.toFixed(2)}</span>
-                          </div>
-                          <div className="mt-2 h-2 rounded-full bg-white/8">
-                            <div
-                              className="h-2 rounded-full bg-gradient-to-r from-[#8fb0d6] via-[#b98fa1] to-[#f4d7a1]"
-                              style={{ width: `${Math.max(numeric * 100, 10)}%` }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
+                  {selectedIndicators.map((indicator) => (
+                    <div key={indicator.key} className="rounded-2xl bg-white/6 p-3">
+                      <div className="flex items-center justify-between gap-2 text-sm">
+                        <span className="text-slate-200">{indicator.key}</span>
+                        <span className="text-slate-300/80">{indicator.value.toFixed(2)}</span>
+                      </div>
+                      <div className="mt-2 h-2 rounded-full bg-white/8">
+                        <div
+                          className="h-2 rounded-full bg-gradient-to-r from-[#8fb0d6] via-[#b98fa1] to-[#f4d7a1]"
+                          style={{ width: `${Math.max(indicator.value * 100, 10)}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </motion.aside>
             </>

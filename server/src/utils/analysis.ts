@@ -2,10 +2,10 @@ import type { AnalysisResult, Emotion, EntryInput, EntryType, PersonalityIndicat
 import { ENTRY_TYPE_LABELS } from "./constants.js";
 import { normalizeAnalysisInput } from "./insightNormalization.js";
 
-const fallbackTags = ["自我观察", "情绪切片", "回声线索"];
+const fallbackTags = ["自我观察", "生活切片", "回声线索"];
 
 const emotionRules: Array<{ emotion: Emotion; words: string[] }> = [
-  { emotion: "positive", words: ["释然", "满足", "开心", "轻松", "平静", "勇敢", "清晰", "松开", "被理解", "舒服"] },
+  { emotion: "positive", words: ["释然", "满足", "开心", "轻松", "平静", "勇敢", "清楚", "松开", "被理解", "舒服"] },
   { emotion: "negative", words: ["焦虑", "难过", "崩溃", "内耗", "害怕", "痛苦", "无助", "压抑", "卡住", "紧绷"] }
 ];
 
@@ -37,23 +37,55 @@ const tagGroups = [
 ];
 
 const typeDefaults: Record<EntryType, { tags: string[]; indicators: PersonalityIndicators }> = {
-  reflection: { tags: ["自我观察"], indicators: { 自我感受: 0.52, 直觉整合: 0.46 } },
-  podcast: { tags: ["播客启发", "认知模型", "输入型内容"], indicators: { 直觉整合: 0.54, 结构分析: 0.62 } },
-  exhibition: { tags: ["展览观看", "感官打开"], indicators: { 自我感受: 0.58, 身体感知: 0.48 } },
-  music: { tags: ["音乐共振", "身体感受"], indicators: { 自我感受: 0.6, 情感共鸣: 0.46 } },
-  movement: { tags: ["运动恢复", "身体感受"], indicators: { 身体感知: 0.64, 节律恢复: 0.42 } },
-  reading: { tags: ["阅读摘记", "认知模型", "输入型内容"], indicators: { 结构分析: 0.6, 直觉整合: 0.48 } },
-  conversation: { tags: ["对话复盘", "关系修复"], indicators: { 情感共鸣: 0.58, 关系敏感: 0.42 } },
-  dream: { tags: ["梦境回放", "潜意识线索"], indicators: { 直觉整合: 0.7 } },
-  other: { tags: ["生活切片"], indicators: { 自我感受: 0.5 } }
+  reflection: {
+    tags: ["自我观察"],
+    indicators: { 反思深度: 0.42, 自主感: 0.28, 意义感: 0.22 }
+  },
+  podcast: {
+    tags: ["播客启发", "认知模型", "输入型内容"],
+    indicators: { 结构整合: 0.52, 意义感: 0.34, 探索驱动: 0.36 }
+  },
+  exhibition: {
+    tags: ["展览观看", "感官打开"],
+    indicators: { 身体觉察: 0.38, 探索驱动: 0.4, 情绪唤醒: 0.24 }
+  },
+  music: {
+    tags: ["音乐共振", "身体感受"],
+    indicators: { 身体觉察: 0.44, 情绪唤醒: 0.32, 联结感: 0.24 }
+  },
+  movement: {
+    tags: ["运动恢复", "身体感受"],
+    indicators: { 身体觉察: 0.48, 恢复弹性: 0.42, 胜任感: 0.26 }
+  },
+  reading: {
+    tags: ["阅读摘记", "认知模型", "输入型内容"],
+    indicators: { 结构整合: 0.5, 反思深度: 0.38, 意义感: 0.3 }
+  },
+  conversation: {
+    tags: ["对话复盘", "关系修复"],
+    indicators: { 联结感: 0.34, 关系敏感: 0.42, 自主感: 0.22 }
+  },
+  dream: {
+    tags: ["梦境回放", "潜意识线索"],
+    indicators: { 反思深度: 0.38, 情绪唤醒: 0.46, 意义感: 0.26 }
+  },
+  other: {
+    tags: ["生活切片"],
+    indicators: { 反思深度: 0.28, 身体觉察: 0.2 }
+  }
 };
 
 function normalizeText(text: string) {
   return text.replace(/\s+/g, " ").trim();
 }
 
-function clamp(value: number) {
-  return Math.max(0, Math.min(1, Number(value.toFixed(2))));
+function clamp(value: number, max = 0.92) {
+  return Math.max(0, Math.min(max, Number(value.toFixed(2))));
+}
+
+function bump(indicators: PersonalityIndicators, key: string, amount: number, base = 0) {
+  const current = typeof indicators[key] === "number" ? Number(indicators[key]) : base;
+  indicators[key] = clamp(current + amount);
 }
 
 function getFullText(input: EntryInput) {
@@ -99,7 +131,7 @@ function boostSpecificContext(input: EntryInput, scores: Map<string, number>) {
   }
 
   if (input.context?.body_state) {
-    scores.set("身体感受", (scores.get("身体感受") || 0) + 1.2);
+    scores.set("身体感受", (scores.get("身体感受") || 0) + 1.1);
   }
 
   if (input.context?.creator && ["podcast", "reading", "music", "exhibition"].includes(input.entry_type || "reflection")) {
@@ -118,7 +150,7 @@ function inferTags(input: EntryInput, text: string) {
   for (const group of tagGroups) {
     const hits = group.words.filter((word) => text.includes(word)).length;
     if (hits > 0) {
-      scores.set(group.tag, (scores.get(group.tag) || 0) + hits * 2.8);
+      scores.set(group.tag, (scores.get(group.tag) || 0) + hits * 2.6);
     }
   }
 
@@ -131,60 +163,68 @@ function inferTags(input: EntryInput, text: string) {
     .slice(0, 6);
 }
 
-function inferIndicators(input: EntryInput, text: string): PersonalityIndicators {
+function inferIndicators(input: EntryInput, text: string, emotion: Emotion): PersonalityIndicators {
   const type = input.entry_type || "reflection";
   const indicators: PersonalityIndicators = { ...typeDefaults[type].indicators };
+  const textLength = Math.min(text.length, 480);
+
+  bump(indicators, "反思深度", Math.min(textLength / 700, 0.24), 0.18);
+
+  if (text.includes("理解") || text.includes("模式") || text.includes("为什么") || text.includes("看见")) {
+    bump(indicators, "结构整合", 0.18, 0.16);
+    bump(indicators, "意义感", 0.12, 0.14);
+  }
+
+  if (text.includes("分析") || text.includes("拆解") || text.includes("想太多") || text.includes("过度解读")) {
+    bump(indicators, "过度分析", 0.32, 0.18);
+    bump(indicators, "结构整合", 0.1, 0.16);
+  }
+
+  if (text.includes("身体") || text.includes("呼吸") || text.includes("肩膀") || text.includes("心跳") || text.includes("酸痛")) {
+    bump(indicators, "身体觉察", 0.3, 0.16);
+  }
 
   if (text.includes("关系") || text.includes("朋友") || text.includes("伴侣") || text.includes("亲密")) {
-    indicators["情感共鸣"] = clamp((Number(indicators["情感共鸣"]) || 0.3) + 0.24);
-    indicators["关系敏感"] = clamp((Number(indicators["关系敏感"]) || 0.2) + 0.28);
-    indicators["依恋波动"] = clamp((Number(indicators["依恋波动"]) || 0.18) + 0.26);
+    bump(indicators, "关系敏感", 0.24, 0.14);
+    bump(indicators, "联结感", 0.16, 0.16);
   }
 
-  if (text.includes("分析") || text.includes("理解") || text.includes("结构") || text.includes("模型")) {
-    indicators["结构分析"] = clamp((Number(indicators["结构分析"]) || 0.34) + 0.28);
-    indicators["过度分析"] = clamp((Number(indicators["过度分析"]) || 0.16) + 0.3);
+  if (text.includes("边界") || text.includes("拒绝") || text.includes("表达需求") || text.includes("说不")) {
+    bump(indicators, "自主感", 0.28, 0.14);
   }
 
-  if (text.includes("梦") || text.includes("预感") || text.includes("反复出现")) {
-    indicators["直觉整合"] = clamp((Number(indicators["直觉整合"]) || 0.42) + 0.28);
+  if (text.includes("完成") || text.includes("做到") || text.includes("坚持") || text.includes("训练")) {
+    bump(indicators, "胜任感", 0.26, 0.14);
   }
 
-  if (text.includes("边界") || text.includes("说不") || text.includes("拒绝")) {
-    indicators["边界感"] = clamp((Number(indicators["边界感"]) || 0.36) + 0.34);
+  if (text.includes("恢复") || text.includes("休息") || text.includes("睡眠") || text.includes("慢下来")) {
+    bump(indicators, "恢复弹性", 0.28, 0.14);
   }
 
-  if (text.includes("投射") || text.includes("镜像")) {
-    indicators["投射识别"] = clamp((Number(indicators["投射识别"]) || 0.28) + 0.36);
+  if (text.includes("探索") || text.includes("好奇") || text.includes("新鲜") || text.includes("展览") || text.includes("旅行")) {
+    bump(indicators, "探索驱动", 0.28, 0.16);
   }
 
-  if (text.includes("焦虑") || text.includes("不安") || text.includes("害怕")) {
-    indicators["焦虑水平"] = clamp((Number(indicators["焦虑水平"]) || 0.32) + 0.42);
+  if (text.includes("意义") || text.includes("价值") || text.includes("方向")) {
+    bump(indicators, "意义感", 0.26, 0.14);
   }
 
-  if (text.includes("清醒") || text.includes("意识到") || text.includes("看见")) {
-    indicators["清醒时刻"] = clamp((Number(indicators["清醒时刻"]) || 0.22) + 0.38);
-  }
-
-  if (text.includes("意义") || text.includes("方向") || text.includes("价值")) {
-    indicators["意义感"] = clamp((Number(indicators["意义感"]) || 0.24) + 0.36);
-  }
-
-  if (text.includes("恢复") || text.includes("休息") || text.includes("睡眠")) {
-    indicators["节律恢复"] = clamp((Number(indicators["节律恢复"]) || 0.26) + 0.34);
-  }
-
-  if (text.includes("创作") || text.includes("表达") || text.includes("灵感")) {
-    indicators["创作驱力"] = clamp((Number(indicators["创作驱力"]) || 0.24) + 0.34);
-  }
-
-  if (text.includes("身体") || text.includes("肩膀") || text.includes("呼吸") || text.includes("心跳")) {
-    indicators["身体觉察"] = clamp((Number(indicators["身体觉察"]) || 0.3) + 0.32);
+  if (emotion === "negative") {
+    bump(indicators, "情绪唤醒", 0.24, 0.26);
+    indicators["情绪效价"] = 0.24;
+  } else if (emotion === "positive") {
+    bump(indicators, "情绪唤醒", 0.14, 0.18);
+    indicators["情绪效价"] = 0.76;
+  } else {
+    bump(indicators, "情绪唤醒", 0.1, 0.16);
+    indicators["情绪效价"] = 0.52;
   }
 
   if (input.context?.energy !== undefined) {
-    const normalizedEnergy = clamp(input.context.energy / 5);
-    indicators["身体感知"] = clamp(Math.max(Number(indicators["身体感知"]) || 0, normalizedEnergy * 0.58));
+    const normalizedEnergy = clamp(input.context.energy / 5, 1);
+    indicators["情绪唤醒"] = clamp(
+      (typeof indicators["情绪唤醒"] === "number" ? Number(indicators["情绪唤醒"]) : 0.2) * 0.6 + normalizedEnergy * 0.4
+    );
   }
 
   return indicators;
@@ -211,7 +251,7 @@ function inferSummary(input: EntryInput, tags: string[], emotion: Emotion) {
 
   if (secondary) {
     const emotionLabel =
-      emotion === "positive" ? "带来了一些舒展" : emotion === "negative" ? "触发了明显波动" : "留下了可回看的线索";
+      emotion === "positive" ? "带来了一点松动" : emotion === "negative" ? "触发了明显波动" : "留下了可回看的线索";
     return trimSummary(`${label}里的${secondary}${emotionLabel}`);
   }
 
@@ -222,7 +262,7 @@ export function heuristicAnalyze(input: EntryInput): AnalysisResult {
   const fullText = getFullText(input);
   const emotion = inferEmotion(fullText);
   const rawTags = inferTags(input, fullText);
-  const rawIndicators = inferIndicators(input, fullText);
+  const rawIndicators = inferIndicators(input, fullText, emotion);
   const normalized = normalizeAnalysisInput(input, {
     emotion,
     tags: rawTags.length > 0 ? rawTags : fallbackTags,

@@ -9,7 +9,7 @@ export const ENTRY_TYPE_OPTIONS: Array<{ value: EntryType; label: string; hint: 
   { value: "reading", label: "阅读", hint: "记录段落、概念、联想和思考脉络" },
   { value: "conversation", label: "对话", hint: "记录聊天、冲突、边界和关系波动" },
   { value: "dream", label: "梦境", hint: "记录意象、情绪残留和醒后的身体感受" },
-  { value: "other", label: "其他", hint: "任何暂时不想被归类，但值得留住的体验" }
+  { value: "other", label: "其他", hint: "任何暂时不想被归类，但值得留下的体验" }
 ];
 
 export const ENTRY_TYPE_LABELS: Record<EntryType, string> = Object.fromEntries(

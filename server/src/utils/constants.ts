@@ -9,28 +9,23 @@ export const ARCHETYPE_KEYS = [
   "寻找者原型"
 ] as const;
 
-export const PERSONALITY_LIBRARY = [
-  "直觉整合",
-  "发散联想",
-  "结构分析",
-  "外部执行",
-  "自我感受",
-  "情感共鸣",
-  "内在记忆",
-  "身体感知",
-  "边界感",
-  "依恋波动",
-  "过度分析",
-  "投射识别",
-  "关系敏感",
-  "焦虑水平",
-  "清醒时刻",
-  "意义感",
-  "节律恢复",
-  "创作驱力",
+export const CORE_INDICATOR_KEYS = [
+  "反思深度",
+  "结构整合",
   "身体觉察",
-  ...ARCHETYPE_KEYS
+  "情绪唤醒",
+  "情绪效价",
+  "自主感",
+  "联结感",
+  "胜任感",
+  "意义感",
+  "探索驱动",
+  "恢复弹性",
+  "过度分析",
+  "关系敏感"
 ] as const;
+
+export const PERSONALITY_LIBRARY = [...CORE_INDICATOR_KEYS, ...ARCHETYPE_KEYS] as const;
 
 export const ENTRY_TYPE_LABELS: Record<EntryType, string> = {
   reflection: "个人反思",
@@ -54,15 +49,15 @@ export const SAMPLE_ENTRIES: Entry[] = [
     id: "6c71220d-f69f-49b7-8dfd-83c6bc4e21b0",
     title: "反复出现的考试梦",
     entry_type: "dream",
-    raw_text: "今天又梦到高中老师，醒来后发现自己还在为考试焦虑。也许我一直在用过度分析保护内心的无助。",
-    summary: "梦境把考试焦虑和过度分析重新带回当下。",
+    raw_text: "今天又梦见高中老师。醒来以后我意识到，自己依然会在压力到来时回到考试焦虑和过度分析里。",
+    summary: "梦境把考试焦虑和过度分析重新带回眼前。",
     tags: ["梦境回放", "考试焦虑", "过度分析", "潜意识线索"],
     emotion: "negative",
     personality_indicators: {
-      直觉整合: 0.78,
-      焦虑水平: 0.88,
-      过度分析: 0.81,
-      孤儿原型: 0.62
+      反思深度: 0.68,
+      情绪唤醒: 0.72,
+      过度分析: 0.78,
+      孤儿原型: 0.58
     },
     context: {
       subject: "高中老师",
@@ -80,15 +75,15 @@ export const SAMPLE_ENTRIES: Entry[] = [
     id: "895f456d-7f91-4c2b-9a86-1948381c310a",
     title: "预测编码那一集播客",
     entry_type: "podcast",
-    raw_text: "听完一集关于预测编码的播客后，我突然理解了自己为什么总想提前预演关系冲突。知道原理以后，心里松了一点。",
-    summary: "播客帮助我看见了关系预演背后的认知模型。",
+    raw_text: "听完关于预测编码的播客后，我突然更理解自己为什么总会提前预演关系冲突。知道原理以后，心里松了一点。",
+    summary: "播客帮我看见关系预演背后的认知模型。",
     tags: ["播客启发", "认知模型", "依恋模式", "自我观察"],
     emotion: "positive",
     personality_indicators: {
-      直觉整合: 0.72,
-      结构分析: 0.66,
-      依恋波动: 0.46,
-      智者原型: 0.74
+      结构整合: 0.74,
+      意义感: 0.6,
+      过度分析: 0.46,
+      智者原型: 0.66
     },
     context: {
       subject: "预测编码",

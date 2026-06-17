@@ -9,6 +9,7 @@ import { TimelinePage } from "./pages/TimelinePage";
 import { ApiError, api, setApiAccessToken } from "./services/api";
 import { supabase } from "./services/supabase";
 import type { DashboardStats, Entry } from "./types";
+import { ENTRY_TYPE_LABELS } from "./utils/constants";
 
 export default function App() {
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -136,23 +137,47 @@ export default function App() {
     }
 
     const keyword = search.trim().toLowerCase();
-    return entries.filter((entry) =>
-      [
-        entry.title,
-        entry.raw_text,
-        entry.summary,
-        entry.emotion,
-        entry.context.subject,
-        entry.context.creator,
-        entry.context.location,
-        entry.context.companions,
-        ...entry.tags
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(keyword)
-    );
+
+    return entries
+      .map((entry) => {
+        let score = 0;
+
+        const title = entry.title.toLowerCase();
+        const summary = entry.summary.toLowerCase();
+        const rawText = entry.raw_text.toLowerCase();
+        const tags = entry.tags.map((tag) => tag.toLowerCase());
+        const indicators = Object.keys(entry.personality_indicators).map((key) => key.toLowerCase());
+        const contexts = [
+          entry.context.subject,
+          entry.context.creator,
+          entry.context.location,
+          entry.context.companions,
+          entry.context.body_state
+        ]
+          .filter(Boolean)
+          .map((item) => String(item).toLowerCase());
+        const typeLabel = ENTRY_TYPE_LABELS[entry.entry_type].toLowerCase();
+        const dateLabel = new Date(entry.occurred_at).toISOString().slice(0, 10);
+
+        if (title.includes(keyword)) score += 9;
+        if (summary.includes(keyword)) score += 6;
+        if (tags.some((tag) => tag.includes(keyword))) score += 8;
+        if (contexts.some((item) => item.includes(keyword))) score += 7;
+        if (indicators.some((item) => item.includes(keyword))) score += 5;
+        if (rawText.includes(keyword)) score += 4;
+        if (typeLabel.includes(keyword) || entry.entry_type.includes(keyword)) score += 4;
+        if (entry.emotion.includes(keyword) || dateLabel.includes(keyword)) score += 2;
+
+        return { entry, score };
+      })
+      .filter((item) => item.score > 0)
+      .sort((left, right) => {
+        if (right.score !== left.score) {
+          return right.score - left.score;
+        }
+        return new Date(right.entry.occurred_at).getTime() - new Date(left.entry.occurred_at).getTime();
+      })
+      .map((item) => item.entry);
   }, [entries, search]);
 
   async function handleSignOut() {
@@ -184,6 +209,7 @@ export default function App() {
       <Header
         search={search}
         onSearchChange={setSearch}
+        resultCount={filteredEntries.length}
         userEmail={session.user.email}
         onSignOut={handleSignOut}
         isSigningOut={isSigningOut}

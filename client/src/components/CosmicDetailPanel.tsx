@@ -5,6 +5,8 @@ interface CosmicDetailPanelProps {
   entry?: Entry;
 }
 
+const archetypeKeys = new Set(["孤儿原型", "战士原型", "疗愈者原型", "女王原型", "智者原型", "寻找者原型"]);
+
 export function CosmicDetailPanel({ entry }: CosmicDetailPanelProps) {
   if (!entry) {
     return (
@@ -12,17 +14,24 @@ export function CosmicDetailPanel({ entry }: CosmicDetailPanelProps) {
         <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/60">Stellar Insight</p>
         <h2 className="mt-2 text-2xl font-semibold text-white">选中一颗星</h2>
         <p className="mt-3 text-sm leading-7 text-slate-300/76">
-          点击宇宙里的恒星或卫星，这里会展开它的摘要、原文、标签、情绪和 AI 分析指数。
+          点击宇宙里的恒星或卫星，这里会展开它的摘要、原文、标签，以及更稳定的连续分析维度。
         </p>
       </section>
     );
   }
 
-  const indicators = Object.entries(entry.personality_indicators).sort((a, b) => {
-    const left = typeof a[1] === "boolean" ? (a[1] ? 1 : 0) : a[1];
-    const right = typeof b[1] === "boolean" ? (b[1] ? 1 : 0) : b[1];
-    return right - left;
-  });
+  const indicators = Object.entries(entry.personality_indicators)
+    .filter(([key]) => !archetypeKeys.has(key))
+    .sort((a, b) => {
+      const left = typeof a[1] === "boolean" ? (a[1] ? 1 : 0) : a[1];
+      const right = typeof b[1] === "boolean" ? (b[1] ? 1 : 0) : b[1];
+      return right - left;
+    });
+  const archetypes = Object.entries(entry.personality_indicators)
+    .filter(([key]) => archetypeKeys.has(key))
+    .map(([key, value]) => ({ key, value: typeof value === "boolean" ? (value ? 1 : 0) : value }))
+    .filter((item) => item.value >= 0.36)
+    .sort((a, b) => b.value - a.value);
 
   return (
     <section className="rounded-[32px] border border-white/10 bg-white/6 p-5 backdrop-blur-xl">
@@ -46,6 +55,22 @@ export function CosmicDetailPanel({ entry }: CosmicDetailPanelProps) {
         ))}
       </div>
 
+      {archetypes.length > 0 ? (
+        <div className="mt-5 rounded-[24px] border border-white/8 bg-[#0b1728]/88 p-4">
+          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">叙事母题</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {archetypes.map((item) => (
+              <span key={item.key} className="rounded-full border border-white/10 bg-white/8 px-3 py-1 text-xs text-slate-200/86">
+                {item.key} {item.value.toFixed(2)}
+              </span>
+            ))}
+          </div>
+          <p className="mt-3 text-sm leading-6 text-slate-300/72">
+            原型在这里被当作叙事母题，而不是人格定论。只有证据足够明显时，它才会出现。
+          </p>
+        </div>
+      ) : null}
+
       <div className="mt-5 rounded-[24px] border border-white/8 bg-[#0b1728]/88 p-4">
         <p className="text-xs uppercase tracking-[0.16em] text-slate-400">原始记录</p>
         <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-200/84">{entry.raw_text}</p>
@@ -66,28 +91,25 @@ export function CosmicDetailPanel({ entry }: CosmicDetailPanelProps) {
         </div>
 
         <div className="rounded-[24px] border border-white/8 bg-[#0b1728]/88 p-4">
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">AI 分析指数</p>
+          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">连续分析维度</p>
           <div className="mt-3 grid gap-3">
-            {indicators.map(([key, value]) => (
-              <div key={key} className="rounded-2xl bg-white/6 p-3">
-                <div className="mb-2 flex items-center justify-between gap-2 text-sm">
-                  <span className="text-slate-200">{key}</span>
-                  <span className="text-slate-300/80">
-                    {typeof value === "boolean" ? (value ? "是" : "否") : value.toFixed(2)}
-                  </span>
-                </div>
-                {typeof value === "number" ? (
+            {indicators.map(([key, value]) => {
+              const numeric = typeof value === "boolean" ? (value ? 1 : 0) : value;
+              return (
+                <div key={key} className="rounded-2xl bg-white/6 p-3">
+                  <div className="mb-2 flex items-center justify-between gap-2 text-sm">
+                    <span className="text-slate-200">{key}</span>
+                    <span className="text-slate-300/80">{numeric.toFixed(2)}</span>
+                  </div>
                   <div className="h-2 rounded-full bg-white/8">
                     <div
                       className="h-2 rounded-full bg-gradient-to-r from-[#8fb0d6] via-[#b98fa1] to-[#f4d7a1]"
-                      style={{ width: `${Math.max(value * 100, 6)}%` }}
+                      style={{ width: `${Math.max(numeric * 100, 6)}%` }}
                     />
                   </div>
-                ) : (
-                  <div className="text-xs text-slate-400">布尔型信号</div>
-                )}
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

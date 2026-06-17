@@ -4,8 +4,8 @@ import { ARCHETYPE_KEYS } from "./constants.js";
 const TAG_ALIASES: Record<string, string> = {
   podcast: "播客启发",
   "podcast inspiration": "播客启发",
-  "cognitive model": "认知模型",
   cognition: "认知模型",
+  "cognitive model": "认知模型",
   music: "音乐共振",
   exhibition: "展览观看",
   reading: "阅读摘记",
@@ -20,9 +20,8 @@ const TAG_ALIASES: Record<string, string> = {
   projection: "投射识别",
   creativity: "创作冲动",
   recovery: "节律恢复",
-  "self-observation": "自我观察",
-  "self observation": "自我观察",
   reflection: "自我观察",
+  "self-observation": "自我观察",
   "body sensation": "身体感受",
   "somatic signal": "身体感受",
   "meaning making": "意义追问",
@@ -30,70 +29,63 @@ const TAG_ALIASES: Record<string, string> = {
   "input content": "输入型内容",
   "creator clue": "创作者线索",
   "subconscious clue": "潜意识线索",
-  "theme": "生活切片",
-  "life slice": "生活切片",
-  "自我成长": "自我整合",
-  "边界感": "边界练习",
-  "关系": "关系修复",
-  "焦虑": "焦虑波动",
-  "考试焦虑": "考试焦虑",
-  "过度解读": "过度分析",
-  "脑科学": "认知模型",
-  "播客": "播客启发",
-  "阅读": "阅读摘记",
-  "看展": "展览观看",
-  "梦境": "梦境回放",
-  "潜意识": "潜意识线索",
-  "运动": "运动恢复",
-  "音乐": "音乐共振"
+  theme: "生活切片",
+  "life slice": "生活切片"
 };
 
 const INDICATOR_ALIASES: Record<string, string> = {
-  ni: "直觉整合",
-  ne: "发散联想",
-  ti: "结构分析",
-  te: "外部执行",
-  fi: "自我感受",
-  fe: "情感共鸣",
-  si: "内在记忆",
-  se: "身体感知",
-  "self awareness": "自我感受",
-  "self-awareness": "自我感受",
-  "pattern insight": "直觉整合",
-  "analytical thinking": "结构分析",
-  "emotional resonance": "情感共鸣",
+  "self awareness": "反思深度",
+  "self-awareness": "反思深度",
+  reflection: "反思深度",
+  "pattern insight": "结构整合",
+  "analytical thinking": "结构整合",
   "body awareness": "身体觉察",
-  "boundary sense": "边界感",
-  "attachment fluctuation": "依恋波动",
-  "overthinking": "过度分析",
-  "projection recognition": "投射识别",
-  "anxiety": "焦虑水平",
-  "clear moment": "清醒时刻",
-  "meaning": "意义感",
-  "recovery": "节律恢复",
-  "creative drive": "创作驱力",
+  "somatic awareness": "身体觉察",
+  "boundary sense": "自主感",
+  "attachment fluctuation": "关系敏感",
   "relationship sensitivity": "关系敏感",
-  "身体感受": "身体觉察",
+  "overthinking": "过度分析",
+  "projection recognition": "过度分析",
+  "anxiety": "情绪唤醒",
+  "clear moment": "意义感",
+  "meaning": "意义感",
+  "recovery": "恢复弹性",
+  "creative drive": "探索驱动",
+  ni: "结构整合",
+  ne: "探索驱动",
+  ti: "结构整合",
+  te: "胜任感",
+  fi: "反思深度",
+  fe: "联结感",
+  si: "身体觉察",
+  se: "情绪唤醒",
+  "自我感受": "反思深度",
+  "直觉整合": "结构整合",
+  "结构分析": "结构整合",
+  "结构化思考": "结构整合",
+  "情感共鸣": "联结感",
+  "关系敏感": "关系敏感",
+  "焦虑水平": "情绪唤醒",
+  "情绪安定": "情绪效价",
+  "边界感": "自主感",
+  "身体感知": "身体觉察",
   "身体觉察": "身体觉察",
-  "边界练习": "边界感",
-  "清醒": "清醒时刻",
-  "焦虑": "焦虑水平",
-  "释然": "节律恢复",
-  "满足": "自我感受",
-  "投射识别": "投射识别",
-  "过度分析": "过度分析",
-  "依恋模式": "依恋波动",
-  "依恋波动": "依恋波动",
+  "节律恢复": "恢复弹性",
+  "创作驱力": "探索驱动",
+  "清醒时刻": "意义感",
   "意义感": "意义感",
-  "节律恢复": "节律恢复",
-  "战士": "战士原型",
-  "孤儿": "孤儿原型",
-  "疗愈者": "疗愈者原型",
-  "女王": "女王原型",
-  "智者": "智者原型",
-  "寻找者": "寻找者原型",
-  "战士原型": "战士原型",
+  "恢复能力": "恢复弹性",
+  "胜任感": "胜任感",
+  "联结感": "联结感",
+  "自主感": "自主感",
+  "过度分析": "过度分析",
+  "情绪唤醒": "情绪唤醒",
+  "情绪效价": "情绪效价",
+  "探索驱动": "探索驱动",
+  "反思深度": "反思深度",
+  "恢复弹性": "恢复弹性",
   "孤儿原型": "孤儿原型",
+  "战士原型": "战士原型",
   "疗愈者原型": "疗愈者原型",
   "女王原型": "女王原型",
   "智者原型": "智者原型",
@@ -104,14 +96,21 @@ function canonicalizeToken(value: string) {
   return value.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
-function clamp01(value: number) {
-  return Math.max(0, Math.min(1, Number(value.toFixed(2))));
+function clampScore(value: number, max = 0.92) {
+  return Math.max(0, Math.min(max, Number(value.toFixed(2))));
+}
+
+function normalizeSignal(value: number | boolean) {
+  if (typeof value === "boolean") {
+    return value ? 0.76 : 0;
+  }
+  return clampScore(value);
 }
 
 function mergeIndicator(target: PersonalityIndicators, key: string, value: number | boolean) {
-  const nextValue = typeof value === "boolean" ? (value ? 1 : 0) : value;
-  const currentValue = typeof target[key] === "boolean" ? ((target[key] as boolean) ? 1 : 0) : Number(target[key] || 0);
-  target[key] = clamp01(Math.max(currentValue, nextValue));
+  const nextValue = normalizeSignal(value);
+  const currentValue = normalizeSignal(target[key] || 0);
+  target[key] = clampScore(Math.max(currentValue, nextValue));
 }
 
 export function normalizeTags(tags: string[]) {
@@ -141,12 +140,7 @@ export function normalizeIndicators(indicators: PersonalityIndicators) {
       continue;
     }
 
-    if (typeof rawValue === "boolean") {
-      mergeIndicator(normalized, canonical, rawValue ? 1 : 0);
-      continue;
-    }
-
-    const numeric = Number(rawValue);
+    const numeric = normalizeSignal(rawValue);
     if (!Number.isFinite(numeric)) {
       continue;
     }
@@ -157,15 +151,11 @@ export function normalizeIndicators(indicators: PersonalityIndicators) {
   return normalized;
 }
 
-function bump(scores: Record<(typeof ARCHETYPE_KEYS)[number], number>, key: (typeof ARCHETYPE_KEYS)[number], amount: number) {
-  scores[key] = clamp01(scores[key] + amount);
-}
-
 function includesAny(text: string, words: string[]) {
   return words.some((word) => text.includes(word));
 }
 
-export function deriveArchetypeIndicators(params: {
+function deriveArchetypeIndicators(params: {
   entry_type?: EntryType;
   raw_text?: string;
   tags: string[];
@@ -174,68 +164,70 @@ export function deriveArchetypeIndicators(params: {
 }) {
   const text = `${params.raw_text || ""} ${params.tags.join(" ")}`;
   const indicators = params.personality_indicators;
-  const scores: Record<(typeof ARCHETYPE_KEYS)[number], number> = {
-    孤儿原型: 0.08,
-    战士原型: 0.08,
-    疗愈者原型: 0.08,
-    女王原型: 0.08,
-    智者原型: 0.08,
-    寻找者原型: 0.08
+  const evidence: Record<(typeof ARCHETYPE_KEYS)[number], number> = {
+    孤儿原型: 0,
+    战士原型: 0,
+    疗愈者原型: 0,
+    女王原型: 0,
+    智者原型: 0,
+    寻找者原型: 0
   };
 
-  if (params.emotion === "negative" || includesAny(text, ["焦虑", "无助", "孤独", "害怕", "考试"])) {
-    bump(scores, "孤儿原型", 0.26);
-  }
-  if (includesAny(text, ["边界", "说不", "坚持", "行动", "冲突", "勇敢"])) {
-    bump(scores, "战士原型", 0.32);
-  }
-  if (includesAny(text, ["修复", "恢复", "安抚", "照顾", "疗愈", "身体", "休息"])) {
-    bump(scores, "疗愈者原型", 0.28);
-  }
-  if (includesAny(text, ["决定", "主体性", "选择", "价值", "掌控", "边界"])) {
-    bump(scores, "女王原型", 0.24);
-  }
-  if (includesAny(text, ["理解", "分析", "模型", "阅读", "播客", "认知", "意义"])) {
-    bump(scores, "智者原型", 0.3);
-  }
-  if (includesAny(text, ["探索", "展览", "旅行", "新鲜", "感官", "寻找", "可能"])) {
-    bump(scores, "寻找者原型", 0.28);
-  }
+  const reflection = Number(indicators["反思深度"] || 0);
+  const structure = Number(indicators["结构整合"] || 0);
+  const body = Number(indicators["身体觉察"] || 0);
+  const arousal = Number(indicators["情绪唤醒"] || 0);
+  const valence = Number(indicators["情绪效价"] || 0.5);
+  const autonomy = Number(indicators["自主感"] || 0);
+  const relatedness = Number(indicators["联结感"] || 0);
+  const competence = Number(indicators["胜任感"] || 0);
+  const meaning = Number(indicators["意义感"] || 0);
+  const exploration = Number(indicators["探索驱动"] || 0);
+  const recovery = Number(indicators["恢复弹性"] || 0);
+  const overthinking = Number(indicators["过度分析"] || 0);
+  const sensitivity = Number(indicators["关系敏感"] || 0);
 
-  if (params.tags.includes("依恋模式") || params.tags.includes("焦虑波动")) {
-    bump(scores, "孤儿原型", 0.18);
+  evidence["孤儿原型"] += arousal * 0.35 + overthinking * 0.22 + sensitivity * 0.16 + (0.5 - valence) * 0.22;
+  evidence["战士原型"] += autonomy * 0.42 + competence * 0.18 + (includesAny(text, ["边界", "拒绝", "坚持", "表达需求"]) ? 0.16 : 0);
+  evidence["疗愈者原型"] += body * 0.26 + recovery * 0.34 + relatedness * 0.14 + (includesAny(text, ["安抚", "照顾", "修复", "休息"]) ? 0.12 : 0);
+  evidence["女王原型"] += autonomy * 0.28 + competence * 0.28 + meaning * 0.12 + (includesAny(text, ["决定", "选择", "掌控", "主体"]) ? 0.12 : 0);
+  evidence["智者原型"] += structure * 0.38 + reflection * 0.18 + meaning * 0.18 + (includesAny(text, ["模型", "理解", "分析", "阅读", "播客"]) ? 0.12 : 0);
+  evidence["寻找者原型"] += exploration * 0.38 + meaning * 0.14 + valence * 0.08 + (includesAny(text, ["展览", "旅行", "新鲜", "可能"]) ? 0.14 : 0);
+
+  if (params.emotion === "negative") {
+    evidence["孤儿原型"] += 0.06;
   }
-  if (params.tags.includes("边界练习") || params.tags.includes("关系修复")) {
-    bump(scores, "战士原型", 0.16);
-    bump(scores, "女王原型", 0.12);
+  if (params.tags.includes("关系修复")) {
+    evidence["疗愈者原型"] += 0.08;
+    evidence["战士原型"] += 0.05;
   }
-  if (params.tags.includes("身体感受") || params.tags.includes("节律恢复")) {
-    bump(scores, "疗愈者原型", 0.18);
+  if (params.tags.includes("认知模型")) {
+    evidence["智者原型"] += 0.08;
   }
-  if (params.tags.includes("阅读摘记") || params.tags.includes("认知模型")) {
-    bump(scores, "智者原型", 0.18);
+  if (params.tags.includes("运动恢复") || params.tags.includes("身体感受")) {
+    evidence["疗愈者原型"] += 0.08;
   }
   if (params.tags.includes("展览观看") || params.tags.includes("感官打开")) {
-    bump(scores, "寻找者原型", 0.2);
+    evidence["寻找者原型"] += 0.08;
   }
 
-  const structureAnalysis = Number(indicators["结构分析"] || 0);
-  const intuition = Number(indicators["直觉整合"] || 0);
-  const selfSense = Number(indicators["自我感受"] || 0);
-  const emotionalResonance = Number(indicators["情感共鸣"] || 0);
-  const boundary = Number(indicators["边界感"] || 0);
-  const anxiety = Number(indicators["焦虑水平"] || 0);
-  const recovery = Number(indicators["节律恢复"] || 0);
-  const meaning = Number(indicators["意义感"] || 0);
+  const ranked = Object.entries(evidence)
+    .map(([key, value]) => [key, clampScore(value, 1)] as const)
+    .sort((a, b) => b[1] - a[1]);
 
-  bump(scores, "智者原型", structureAnalysis * 0.28 + intuition * 0.12 + meaning * 0.12);
-  bump(scores, "疗愈者原型", emotionalResonance * 0.18 + recovery * 0.24 + selfSense * 0.1);
-  bump(scores, "战士原型", boundary * 0.26);
-  bump(scores, "女王原型", selfSense * 0.18 + boundary * 0.12);
-  bump(scores, "孤儿原型", anxiety * 0.22);
-  bump(scores, "寻找者原型", intuition * 0.12 + meaning * 0.18);
+  const result: PersonalityIndicators = {};
+  const strongest = ranked[0];
+  const second = ranked[1];
 
-  return scores;
+  if (strongest && strongest[1] >= 0.38) {
+    result[strongest[0]] = clampScore(0.42 + strongest[1] * 0.46, 0.86);
+  }
+
+  if (second && second[1] >= 0.46 && strongest && strongest[1] - second[1] <= 0.18) {
+    result[second[0]] = clampScore(0.34 + second[1] * 0.4, 0.78);
+  }
+
+  return result;
 }
 
 export function normalizeInsightPayload(payload: {

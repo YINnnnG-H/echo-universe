@@ -5,10 +5,13 @@ interface ObservationDeckProps {
   entries: Entry[];
 }
 
+const archetypeKeys = new Set(["孤儿原型", "战士原型", "疗愈者原型", "女王原型", "智者原型", "寻找者原型"]);
+
 export function ObservationDeck({ stats, entries }: ObservationDeckProps) {
   const latest = entries[0];
   const topIndicators = latest
     ? Object.entries(latest.personality_indicators)
+        .filter(([key]) => !archetypeKeys.has(key))
         .map(([key, value]) => ({
           key,
           value: typeof value === "boolean" ? (value ? 1 : 0) : value
@@ -22,7 +25,7 @@ export function ObservationDeck({ stats, entries }: ObservationDeckProps) {
       <p className="text-[11px] uppercase tracking-[0.3em] text-slate-300/60">Observation Deck</p>
       <h2 className="mt-2 text-2xl font-semibold text-white">观星摘要</h2>
       <p className="mt-3 text-sm leading-7 text-slate-300/76">
-        这里是宇宙的结构层摘要。你可以看见哪些主题最亮、哪些内容类型最常出现，以及最近一颗星最突出的信号是什么。
+        这里优先展示更稳定的连续维度，比如反思、身体觉察、意义感和恢复弹性。原型会保留在更高层的叙事解释里，而不是直接当成定论。
       </p>
 
       <div className="mt-5 grid gap-4 xl:grid-cols-2">
@@ -52,7 +55,7 @@ export function ObservationDeck({ stats, entries }: ObservationDeckProps) {
         <div className="rounded-[24px] border border-white/8 bg-[#0b1728]/88 p-4 xl:col-span-2">
           <p className="text-xs uppercase tracking-[0.16em] text-slate-400">最近一颗星的主信号</p>
           <p className="mt-2 text-sm leading-6 text-slate-300/72">
-            这些指数已经统一成固定中文框架，后续回看时不会再中英混杂。
+            这里优先展示连续维度，让你更容易比较不同记录之间的细微差异，而不是看到一整排相同的满分。
           </p>
           <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {topIndicators.map((indicator) => (
