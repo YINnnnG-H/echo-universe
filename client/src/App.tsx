@@ -3,6 +3,7 @@ import { startTransition, useEffect, useMemo, useState } from "react";
 import { Route, Routes } from "react-router-dom";
 import { AuthScreen } from "./components/AuthScreen";
 import { Header } from "./components/Header";
+import { AdminPage } from "./pages/AdminPage";
 import { InsightsPage } from "./pages/InsightsPage";
 import { NewEntryPage } from "./pages/NewEntryPage";
 import { TimelinePage } from "./pages/TimelinePage";
@@ -10,6 +11,13 @@ import { ApiError, api, setApiAccessToken } from "./services/api";
 import { supabase } from "./services/supabase";
 import type { DashboardStats, Entry } from "./types";
 import { ENTRY_TYPE_LABELS } from "./utils/constants";
+
+function getAdminEmails() {
+  return (import.meta.env.VITE_ADMIN_EMAILS || "")
+    .split(",")
+    .map((item: string) => item.trim().toLowerCase())
+    .filter(Boolean);
+}
 
 export default function App() {
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -21,6 +29,8 @@ export default function App() {
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isWorkspaceLoading, setIsWorkspaceLoading] = useState(false);
+
+  const isAdmin = Boolean(session?.user.email && getAdminEmails().includes(session.user.email.toLowerCase()));
 
   async function loadAll() {
     setLoadError("");
@@ -211,6 +221,7 @@ export default function App() {
         onSearchChange={setSearch}
         resultCount={filteredEntries.length}
         userEmail={session.user.email}
+        isAdmin={isAdmin}
         onSignOut={handleSignOut}
         isSigningOut={isSigningOut}
       />
@@ -238,6 +249,7 @@ export default function App() {
             }
           />
           <Route path="/insights" element={<InsightsPage stats={stats} />} />
+          <Route path="/admin" element={<AdminPage isAdmin={isAdmin} />} />
           <Route path="/new" element={<NewEntryPage onRefresh={refreshAfterSave} />} />
         </Routes>
       </main>

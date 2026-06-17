@@ -510,6 +510,10 @@ export function CosmicCanvas({
 
   const worldTransform = `translate3d(${viewport.x}px, ${viewport.y}px, 0) scale(${viewport.scale})`;
 
+  function blockCanvasPan(event: ReactPointerEvent<HTMLElement>) {
+    event.stopPropagation();
+  }
+
   return (
     <section
       className={`relative overflow-hidden border border-white/10 bg-[#07111f]/76 shadow-[0_32px_90px_rgba(2,6,16,0.55)] ${
@@ -777,11 +781,23 @@ export function CosmicCanvas({
                   <button
                     type="button"
                     data-space-node="true"
-                    onClick={() => onSelectTag(constellation.tag.tag)}
+                    onPointerDown={blockCanvasPan}
+                    onPointerUp={blockCanvasPan}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onSelectTag(constellation.tag.tag);
+                    }}
                     className={`absolute z-20 -translate-x-1/2 -translate-y-1/2 rounded-full text-left transition ${
                       activeTag === constellation.tag.tag ? "scale-110" : "hover:scale-105"
                     }`}
-                    style={{ left: `${constellation.x}%`, top: `${constellation.y}%`, opacity: isActive ? 1 : 0.5 }}
+                    style={{
+                      left: `${constellation.x}%`,
+                      top: `${constellation.y}%`,
+                      opacity: isActive ? 1 : 0.5,
+                      width: isExpanded ? "68px" : "54px",
+                      minHeight: isExpanded ? "68px" : "54px",
+                      touchAction: "manipulation"
+                    }}
                   >
                     <motion.div
                       animate={{
@@ -848,7 +864,12 @@ export function CosmicCanvas({
                       <motion.button
                         type="button"
                         data-space-node="true"
-                        onClick={() => onSelectEntry(satellite.entry)}
+                        onPointerDown={blockCanvasPan}
+                        onPointerUp={blockCanvasPan}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onSelectEntry(satellite.entry);
+                        }}
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{
                           opacity: selectedEntry?.id === satellite.entry.id ? [0.74, 1, 0.84, 1] : [0.4, 0.92, 0.58, 0.9],
@@ -866,8 +887,9 @@ export function CosmicCanvas({
                         style={{
                           left: `${satellite.x}%`,
                           top: `${satellite.y}%`,
-                          width: isExpanded ? "30px" : "24px",
-                          height: isExpanded ? "30px" : "24px",
+                          width: isExpanded ? "42px" : "30px",
+                          height: isExpanded ? "42px" : "30px",
+                          touchAction: "manipulation",
                           opacity: isActive ? 1 : 0.38
                         }}
                       >
@@ -891,7 +913,12 @@ export function CosmicCanvas({
                 key={star.id}
                 type="button"
                 data-space-node="true"
-                onClick={() => onSelectEntry(star.entry)}
+                onPointerDown={blockCanvasPan}
+                onPointerUp={blockCanvasPan}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onSelectEntry(star.entry);
+                }}
                 className={`absolute z-10 -translate-x-1/2 -translate-y-1/2 rounded-full ${
                   selectedEntry?.id === star.id ? "ring-2 ring-white/40" : ""
                 }`}
@@ -911,8 +938,9 @@ export function CosmicCanvas({
                 style={{
                   left: `${star.x}%`,
                   top: `${star.y}%`,
-                  width: isExpanded ? "28px" : "22px",
-                  height: isExpanded ? "28px" : "22px"
+                  width: isExpanded ? "40px" : "28px",
+                  height: isExpanded ? "40px" : "28px",
+                  touchAction: "manipulation"
                 }}
               >
                 <div

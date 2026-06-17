@@ -1,5 +1,5 @@
-import { Compass, LoaderCircle, LogOut, Search, Sparkles, Telescope } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Compass, LoaderCircle, LogOut, Search, Shield, Sparkles, Telescope } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 
 interface HeaderProps {
@@ -7,26 +7,36 @@ interface HeaderProps {
   onSearchChange: (value: string) => void;
   resultCount?: number;
   userEmail?: string;
+  isAdmin?: boolean;
   onSignOut: () => Promise<void> | void;
   isSigningOut?: boolean;
 }
-
-const navItems = [
-  { to: "/", label: "回声宇宙", icon: Compass },
-  { to: "/insights", label: "观测台", icon: Telescope }
-];
 
 export function Header({
   search,
   onSearchChange,
   resultCount = 0,
   userEmail,
+  isAdmin = false,
   onSignOut,
   isSigningOut = false
 }: HeaderProps) {
   const location = useLocation();
   const isTimeline = location.pathname === "/";
   const [isCondensed, setIsCondensed] = useState(false);
+
+  const navItems = useMemo(() => {
+    const base = [
+      { to: "/", label: "回声宇宙", icon: Compass },
+      { to: "/insights", label: "观测台", icon: Telescope }
+    ];
+
+    if (isAdmin) {
+      base.push({ to: "/admin", label: "用户观测", icon: Shield });
+    }
+
+    return base;
+  }, [isAdmin]);
 
   useEffect(() => {
     function handleScroll() {

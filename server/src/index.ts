@@ -5,6 +5,7 @@ import cors from "cors";
 import express from "express";
 import { loadEnv } from "./loadEnv.js";
 import { accountRouter } from "./routes/account.js";
+import { adminRouter } from "./routes/admin.js";
 import { entriesRouter } from "./routes/entries.js";
 import { statsRouter } from "./routes/stats.js";
 
@@ -35,6 +36,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api/account", accountRouter);
+app.use("/api/admin", adminRouter);
 app.use("/api/entries", entriesRouter);
 app.use("/api/stats", statsRouter);
 

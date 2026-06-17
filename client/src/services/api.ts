@@ -1,4 +1,4 @@
-import type { DashboardStats, Entry, EntryDraft } from "../types";
+import type { AdminUsersResponse, DashboardStats, Entry, EntryDraft } from "../types";
 
 function getApiUrl() {
   if (import.meta.env.VITE_API_URL) {
@@ -114,5 +114,6 @@ export const api = {
     request<void>(`/api/entries/${id}`, {
       method: "DELETE"
     }),
+  getAdminUsers: () => request<AdminUsersResponse>("/api/admin/users"),
   getDashboardStats: () => request<DashboardStats>("/api/stats/dashboard")
 };

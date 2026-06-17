@@ -115,3 +115,13 @@ export interface AuthContext {
   userId: string;
   email?: string;
 }
+
+export interface AdminUserStat {
+  user_id: string;
+  email: string;
+  created_at?: string;
+  last_sign_in_at?: string;
+  entry_count: number;
+  latest_entry_at?: string;
+  top_tags: TagStat[];
+}
